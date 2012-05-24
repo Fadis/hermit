@@ -136,7 +136,7 @@ namespace hermit {
                   serial += ':';
                 }
                 if( serial[ serial.size() - 2 ] != ':' && serial[ serial.size() - 1 ] == ':' )
-                  serial.pop_back();
+                  serial.erase( serial.size() - 1 );
                 ipv6_phase2_rule< std::string::const_iterator, true > ipv6address;
                 std::pair< uint64_t, uint64_t > ipv6_value;
                 std::string::const_iterator ipv6_iter = serial.begin();
@@ -156,9 +156,9 @@ namespace hermit {
                   serial += ':';
                 }
                 if( str.back().empty() )
-                  serial.pop_back();
+                  serial.erase( serial.size() - 1 );
                 if( serial[ serial.size() - 2 ] != ':' && serial[ serial.size() - 1 ] == ':' )
-                  serial.pop_back();
+                  serial.erase( serial.size() - 1 );
                 ipv6_phase2_rule< std::string::const_iterator, false > ipv6address;
                 std::pair< uint64_t, uint64_t > ipv6_value;
                 std::string::const_iterator ipv6_iter = serial.begin();

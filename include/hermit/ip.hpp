@@ -40,10 +40,10 @@ namespace hermit {
     ) {
       return
         ( boost::format("%d.%d.%d.%d") %
-          ( static_cast< uint8_t >( value >> 24 ) & 0xFF ) %
-          ( static_cast< uint8_t >( value >> 16 ) & 0xFF ) %
-          ( static_cast< uint8_t >( value >> 8 ) & 0xFF ) %
-          ( static_cast< uint8_t >( value ) & 0xFF ) ).str();
+          ( static_cast< uint8_t >( value >> 24 ) ) %
+          ( static_cast< uint8_t >( value >> 16 ) ) %
+          ( static_cast< uint8_t >( value >> 8 ) ) %
+          ( static_cast< uint8_t >( value ) ) ).str();
     }
     
     template< unsigned int length >
@@ -52,14 +52,14 @@ namespace hermit {
     ) {
       return
         ( boost::format("%X:%X:%X:%X:%X:%X:%X:%X") %
-          ( static_cast<uint16_t>( value >> 112 ) & 0xFFFF ) %
-          ( static_cast<uint16_t>( value >> 96 ) & 0xFFFF ) %
-          ( static_cast<uint16_t>( value >> 80 ) & 0xFFFF ) %
-          ( static_cast<uint16_t>( value >> 64 ) & 0xFFFF ) %
-          ( static_cast<uint16_t>( value >> 48 ) & 0xFFFF ) %
-          ( static_cast<uint16_t>( value >> 32 ) & 0xFFFF ) %
-          ( static_cast<uint16_t>( value >> 16 ) & 0xFFFF ) %
-          ( static_cast<uint16_t>( value ) & 0xFFFF ) ).str();
+          ( static_cast<uint16_t>( value >> 112 ) ) %
+          ( static_cast<uint16_t>( value >> 96 ) ) %
+          ( static_cast<uint16_t>( value >> 80 ) ) %
+          ( static_cast<uint16_t>( value >> 64 ) ) %
+          ( static_cast<uint16_t>( value >> 48 ) ) %
+          ( static_cast<uint16_t>( value >> 32 ) ) %
+          ( static_cast<uint16_t>( value >> 16 ) ) %
+          ( static_cast<uint16_t>( value ) ) ).str();
     }
 
   }

@@ -48,27 +48,53 @@
   }
 
 namespace hermit {
+  boost::optional< std::string > is_hex( const std::string &temp ) {
+    using boost::spirit::qi::parse;
+    using boost::spirit::ascii::char_;
+    using boost::spirit::ascii::space;
+    using boost::spirit::ascii::digit;
+    auto iter = temp.begin();
+    std::vector< char > result;
+    if( parse( iter, temp.end(), -( char_('-')|char_('+') ) >> "0x" >> +( digit|char_( "a-fA-F" ) ), result ) && iter == temp.end() )
+      return std::string( result.begin(), result.end() );
+    return boost::optional< std::string >();
+  }
+  boost::optional< std::string > is_dec( const std::string temp ) {
+    using boost::spirit::qi::parse;
+    using boost::spirit::ascii::char_;
+    using boost::spirit::ascii::space;
+    using boost::spirit::ascii::digit;
+    auto iter = temp.begin();
+    std::vector< char > result;
+    if( parse( iter, temp.end(), -( char_('-')|char_('+') ) >> +digit, result ) && iter == temp.end() ) {
+      return std::string( result.begin(), result.end() );
+    }
+    return boost::optional< std::string >();
+
+  }
+  boost::optional< std::string > is_oct( const std::string temp ) {
+    using boost::spirit::qi::parse;
+    using boost::spirit::ascii::char_;
+    using boost::spirit::ascii::space;
+    using boost::spirit::ascii::digit;
+    auto iter = temp.begin();
+    std::vector< char > result;
+    if( parse( iter, temp.end(), -( char_('-')|char_('+') ) >> '0' >> +char_( "0-7" ), result ) && iter == temp.end() )
+      return std::string( result.begin(), result.end() );
+    return boost::optional< std::string >();
+  }
+
   class mpint {
   public:
     mpint() {
       MPINT_SAFE_CALL( mp_init( &value ) );
-      std::cout << __FILE__ << " " << __LINE__ << " " << "init mp " << this << " " << value.dp << std::endl;
       mp_zero( &value );
-    }
-    mpint( mpint &&src_ ) : value( std::move( src_.value ) ) {
     }
     mpint( const mpint &src_ ) {
       MPINT_SAFE_CALL( mp_init_copy( &value, const_cast< mp_int* >( &src_.value ) ) );
-      std::cout << __FILE__ << " " << __LINE__ << " " << "copy init mp " << this << " " << value.dp << std::endl;
-    }
-    mpint &operator=( mpint &&src_ ) {
-      std::cout << __FILE__ << " " << __LINE__ << " " << "move init mp " << this << " " << value.dp << std::endl;
-      value = std::move( src_.value );
-      return *this;
     }
     mpint &operator=( const mpint &src_ ) {
       MPINT_SAFE_CALL( mp_init_copy( &value, const_cast< mp_int* >( &src_.value ) ) );
-      std::cout << __FILE__ << " " << __LINE__ << " " << "copy init mp " << this << " " << value.dp << std::endl;
       return *this;
     }
     template< typename T >
@@ -80,18 +106,33 @@ namespace hermit {
           >::type* = NULL
     ) {
       MPINT_SAFE_CALL( mp_init( &value ) );
-      std::cout << __FILE__ << " " << __LINE__ << " " << "init mp " << this << " " << value.dp << std::endl;
       mp_zero( &value );
       from_string( boost::lexical_cast< std::string >( value_ ), 10 );
     }
     mpint( const std::string &value_ ) {
       MPINT_SAFE_CALL( mp_init( &value ) );
-      std::cout << __FILE__ << " " << __LINE__ << " " << "init mp " << this << " " << value.dp << std::endl;
       mp_zero( &value );
-      from_string( value_, 10 );
+      boost::optional< std::string > transformed = is_oct( value_ );
+      if( transformed ) {
+        from_string( value_, 8 );
+      }
+      else {
+        transformed = is_hex( value_ );
+        if( transformed ) {
+          from_string( *transformed, 16 );
+        }
+        else {
+          transformed = is_dec( value_ );
+          if( transformed ) {
+            std::string foo = *transformed;
+            from_string( *transformed, 10 );
+          }
+          else
+            throw std::runtime_error( "Invalid integer format" );
+        }
+      }
     }
     ~mpint() {
-      std::cout << __FILE__ << " " << __LINE__ << " " << "delete mp " << this << " " << value.dp << std::endl;
       mp_clear( &value );
     }
     void swap( mpint &target ) {
@@ -110,51 +151,60 @@ namespace hermit {
       return mp_count_bits( const_cast< mp_int* >( &value ) );
     }
     operator uint64_t() const {
-      std::string temp = to_string( 10 );
-      return boost::lexical_cast< uint64_t >( temp );
+      static const mpint mask( "0xFFFFFFFFFFFFFFFF" );
+      std::string temp = ( *this & mask ).to_string( 10 );
+      return boost::lexical_cast< uint64_t >( *this & mask );
     }
     operator int64_t() const {
-      std::string temp = to_string( 10 );
-      return boost::lexical_cast< int64_t >( temp );
+      static const mpint mask( "0x7FFFFFFFFFFFFFFF" );
+      return boost::lexical_cast< int64_t >( *this & mask );
     }
     operator uint32_t() const {
-      std::string temp = to_string( 10 );
-      return boost::lexical_cast< uint32_t >( temp );
+      static const mpint mask( "0xFFFFFFFF" );
+     return boost::lexical_cast< uint32_t >( *this & mask );
     }
     operator int32_t() const {
-      std::string temp = to_string( 10 );
+      static const mpint mask( "0x7FFFFFFF" );
+      std::string temp = ( *this & mask ).to_string( 10 );
       return boost::lexical_cast< int32_t >( temp );
     }
     operator uint16_t() const {
-      std::string temp = to_string( 10 );
+      static const mpint mask( "0xFFFF" );
+      std::string temp = ( *this & mask ).to_string( 10 );
       return boost::lexical_cast< uint16_t >( temp );
     }
     operator int16_t() const {
-      std::string temp = to_string( 10 );
+      static const mpint mask( "0x7FFF" );
+      std::string temp = ( *this & mask ).to_string( 10 );
       return boost::lexical_cast< int16_t >( temp );
     }
     operator uint8_t() const {
-      std::string temp = to_string( 10 );
+      static const mpint mask( "0xFF" );
+      std::string temp = ( *this & mask ).to_string( 10 );
       return boost::lexical_cast< uint8_t >( temp );
     }
     operator int8_t() const {
-      std::string temp = to_string( 10 );
+      static const mpint mask( "0x7F" );
+      std::string temp = ( *this & mask ).to_string( 10 );
       return boost::lexical_cast< int8_t >( temp );
     }
     mpint &operator>>=( int right ) {
-      mp_rshd( &value, right );
+      *this = *this >> right;
+      return *this;
     }
     mpint &operator<<=( int right ) {
-      MPINT_SAFE_CALL( mp_lshd( &value, right ) );
+      *this = *this << right;
+      return *this;
     }
     mpint operator>>( int right ) const {
-      mpint result = *this;
-      result >>= right;
+      mpint result;
+      mpint remainder;
+      MPINT_SAFE_CALL( mp_div_2d( const_cast< mp_int* >( &value ), right, &result.value, &remainder.value ) ) 
       return result;
     }
     mpint operator<<( int right ) const {
-      mpint result = *this;
-      result <<= right;
+      mpint result;
+      MPINT_SAFE_CALL( mp_mul_2d( const_cast< mp_int* >( &value ), right, &result.value ) ) 
       return result;
     }
     mpint operator^( const mpint &right ) const {
@@ -257,8 +307,9 @@ namespace hermit {
       int length;
       MPINT_SAFE_CALL( mp_radix_size( const_cast< mp_int* >( &value ), radix, &length ) );
       std::vector< char > temp( length );
+      std::fill( temp.begin(), temp.end(), 0 );
       MPINT_SAFE_CALL( mp_toradix_n( const_cast< mp_int* >( &value ), &temp.front(), radix, length ) );
-      std::string str( temp.begin(), temp.end() );
+      std::string str( &temp.front() );
       return str;
     }
     void from_string( const std::string &str, int radix ) {
@@ -278,6 +329,8 @@ namespace hermit {
       stream << mp_value.to_string( 16 );
     else if( stream.flags() & std::ios_base::oct )
       stream << mp_value.to_string( 8 );
+    else
+      stream << mp_value.to_string( 10 );
     return stream;
   }
 
@@ -318,6 +371,18 @@ namespace hermit {
         std::vector< char > result;
         if( parse( iter, temp.end(), -( char_('-')|char_('+') ) >> +char_( "0-7" ), result ) && iter == temp.end() ) {
           mp_value.from_string( temp, 8 );
+          break;
+        }
+      }
+    }
+    else {
+      while( stream.good() && !stream.eof() ) {
+        std::string temp;
+        stream >> temp;
+        auto iter = temp.begin();
+        std::vector< char > result;
+        if( parse( iter, temp.end(), -( char_('-')|char_('+') ) >> +digit, result ) && iter == temp.end() ) {
+          mp_value.from_string( temp, 10 );
           break;
         }
       }

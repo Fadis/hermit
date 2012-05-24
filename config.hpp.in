@@ -1,3 +1,0 @@
-#cmakedefine HAVE_INT128_T
-#cmakedefine TomMath_FOUND
-#cmakedefine FOO
