@@ -95,7 +95,6 @@ namespace hermit {
       }
       operator uint64_t() const {
         static const mpint mask( "0xFFFFFFFFFFFFFFFF" );
-        std::string temp = ( *this & mask ).to_string( 10 );
         return boost::lexical_cast< uint64_t >( *this & mask );
       }
       operator int64_t() const {
@@ -108,28 +107,23 @@ namespace hermit {
       }
       operator int32_t() const {
         static const mpint mask( "0x7FFFFFFF" );
-        std::string temp = ( *this & mask ).to_string( 10 );
-        return boost::lexical_cast< int32_t >( temp );
+        return boost::lexical_cast< int32_t >( *this & mask );
       }
       operator uint16_t() const {
         static const mpint mask( "0xFFFF" );
-        std::string temp = ( *this & mask ).to_string( 10 );
-        return boost::lexical_cast< uint16_t >( temp );
+        return boost::lexical_cast< uint16_t >( *this & mask );
       }
       operator int16_t() const {
         static const mpint mask( "0x7FFF" );
-        std::string temp = ( *this & mask ).to_string( 10 );
-        return boost::lexical_cast< int16_t >( temp );
+        return boost::lexical_cast< int16_t >( *this & mask );
       }
       operator uint8_t() const {
         static const mpint mask( "0xFF" );
-        std::string temp = ( *this & mask ).to_string( 10 );
-        return boost::lexical_cast< uint8_t >( temp );
+        return boost::lexical_cast< uint8_t >( *this & mask );
       }
       operator int8_t() const {
         static const mpint mask( "0x7F" );
-        std::string temp = ( *this & mask ).to_string( 10 );
-        return boost::lexical_cast< int8_t >( temp );
+        return boost::lexical_cast< int8_t >( *this & mask );
       }
       mpint &operator>>=( int right ) {
         *this = *this >> right;
