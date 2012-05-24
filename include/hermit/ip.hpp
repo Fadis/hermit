@@ -3,6 +3,8 @@
 #include <stdexcept>
 #include <boost/utility/enable_if.hpp>
 #include <boost/format.hpp>
+#include <boost/mpl/bool.hpp>
+#include <boost/lexical_cast.hpp>
 #include <hermit/integer.hpp>
 
 namespace hermit {
@@ -69,6 +71,8 @@ namespace hermit {
       public:
         typedef typename uint_t< length >::least value_type;
         ip() : value( 0 ) {}
+        ip( const std::string &value_ ) : value( detail::str2ip< length >( value_ ) ) {
+        }
         ip( const value_type &value_ ) : value( value_ & get_mask() ) {
         }
         ip<length> operator|( const ip<length> &right ) const {
@@ -91,6 +95,24 @@ namespace hermit {
         ip<length> &operator^=( const ip<length> &right ) {
           value ^= right.value;
           return *this;
+        }
+        bool operator==( const ip<length> &right ) const {
+          return value == right.value;
+        }
+        bool operator!=( const ip<length> &right ) const {
+          return value != right.value;
+        }
+        bool operator>( const ip<length> &right ) const {
+          return value > right.value;
+        }
+        bool operator<( const ip<length> &right ) const {
+          return value < right.value;
+        }
+        bool operator>=( const ip<length> &right ) const {
+          return value >= right.value;
+        }
+        bool operator<=( const ip<length> &right ) const {
+          return value <= right.value;
         }
         value_type get_raw() const {
           return value;
@@ -127,6 +149,23 @@ namespace hermit {
       std::string temp = detail::ip2str< length >( value.get_raw() );
       stream << temp;
       return stream;
+    }
+
+    template< unsigned int length >
+    bool is_loopback( const ip< length > &value,
+      typename boost::enable_if< boost::mpl::bool_< length == 32 > >::type* = 0
+    ) {
+      static const ip< 32 > loopback_mask( "255.0.0.0" );
+      static const ip< 32 > loopback( "127.0.0.0" );
+      return loopback == value & loopback_mask; 
+    }
+
+    template< unsigned int length >
+    bool is_loopback( const ip< length > &value,
+      typename boost::enable_if< boost::mpl::bool_< length == 128 > >::type* = 0
+    ) {
+      static const ip< 128 > loopback( "::1" );
+      return loopback == value; 
     }
 }
 
