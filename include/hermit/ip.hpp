@@ -167,6 +167,36 @@ namespace hermit {
       static const ip< 128 > loopback( "::1" );
       return loopback == value; 
     }
+
+    template< unsigned int length >
+    bool is_unspecified( const ip< length > &value,
+      typename boost::enable_if< boost::mpl::bool_< length == 32 > >::type* = 0
+    ) {
+      static const ip< 32 > unspecified( "0.0.0.0" );
+      return unspecified == value; 
+    }
+
+    template< unsigned int length >
+    bool is_unspecified( const ip< length > &value,
+      typename boost::enable_if< boost::mpl::bool_< length == 128 > >::type* = 0
+    ) {
+      static const ip< 128 > unspecified( "0::0" );
+      return unspecified == value; 
+    }
+    /*
+    template< unsigned int length >
+    bool is_local( const ip< length > &value,
+      typename boost::enable_if< boost::mpl::bool_< length == 32 > >::type* = 0
+    ) {
+      static const ip< 32 > local_a_mask( "255.0.0.0" );
+      static const ip< 32 > local_a( "10.0.0.0" );
+      static const ip< 32 > local_b_mask( "255.240.0.0" );
+      static const ip< 32 > local_b( "172.16.0.0" );
+      static const ip< 32 > local_c_mask( "255.255.0.0" );
+      static const ip< 32 > local_c( "192.168.0.0" );
+      return unspecified == value; 
+    }*/
+
 }
 
 #endif
