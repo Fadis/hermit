@@ -42,10 +42,10 @@ namespace hermit {
     ) {
       return
         ( boost::format("%d.%d.%d.%d") %
-          ( static_cast< uint8_t >( value >> 24 ) ) %
-          ( static_cast< uint8_t >( value >> 16 ) ) %
-          ( static_cast< uint8_t >( value >> 8 ) ) %
-          ( static_cast< uint8_t >( value ) ) ).str();
+          ( static_cast< int >( static_cast< uint8_t >( value >> 24 ) ) ) %
+          ( static_cast< int >( static_cast< uint8_t >( value >> 16 ) ) ) %
+          ( static_cast< int >( static_cast< uint8_t >( value >> 8 ) ) ) %
+          ( static_cast< int >( static_cast< uint8_t >( value ) ) ) ).str();
     }
     
     template< unsigned int length >
@@ -54,14 +54,14 @@ namespace hermit {
     ) {
       return
         ( boost::format("%X:%X:%X:%X:%X:%X:%X:%X") %
-          ( static_cast<uint16_t>( value >> 112 ) ) %
-          ( static_cast<uint16_t>( value >> 96 ) ) %
-          ( static_cast<uint16_t>( value >> 80 ) ) %
-          ( static_cast<uint16_t>( value >> 64 ) ) %
-          ( static_cast<uint16_t>( value >> 48 ) ) %
-          ( static_cast<uint16_t>( value >> 32 ) ) %
-          ( static_cast<uint16_t>( value >> 16 ) ) %
-          ( static_cast<uint16_t>( value ) ) ).str();
+          ( static_cast< int >( static_cast<uint16_t>( value >> 112 ) ) ) %
+          ( static_cast< int >( static_cast<uint16_t>( value >> 96 ) ) ) %
+          ( static_cast< int >( static_cast<uint16_t>( value >> 80 ) ) ) %
+          ( static_cast< int >( static_cast<uint16_t>( value >> 64 ) ) ) %
+          ( static_cast< int >( static_cast<uint16_t>( value >> 48 ) ) ) %
+          ( static_cast< int >( static_cast<uint16_t>( value >> 32 ) ) ) %
+          ( static_cast< int >( static_cast<uint16_t>( value >> 16 ) ) ) %
+          ( static_cast< int >( static_cast<uint16_t>( value ) ) ) ).str();
     }
 
   }
@@ -157,7 +157,7 @@ namespace hermit {
     ) {
       static const ip< 32 > loopback_mask( "255.0.0.0" );
       static const ip< 32 > loopback( "127.0.0.0" );
-      return loopback == value & loopback_mask; 
+      return loopback == ( value & loopback_mask ); 
     }
 
     template< unsigned int length >
@@ -183,7 +183,7 @@ namespace hermit {
       static const ip< 128 > unspecified( "0::0" );
       return unspecified == value; 
     }
-    /*
+
     template< unsigned int length >
     bool is_local( const ip< length > &value,
       typename boost::enable_if< boost::mpl::bool_< length == 32 > >::type* = 0
@@ -194,9 +194,35 @@ namespace hermit {
       static const ip< 32 > local_b( "172.16.0.0" );
       static const ip< 32 > local_c_mask( "255.255.0.0" );
       static const ip< 32 > local_c( "192.168.0.0" );
-      return unspecified == value; 
-    }*/
+      return local_a == ( local_a_mask & value ) || local_b == ( local_b_mask & value ) || local_c == ( local_c_mask & value ); 
+    }
 
+    template< unsigned int length >
+    bool is_local( const ip< length > &value,
+      typename boost::enable_if< boost::mpl::bool_< length == 128 > >::type* = 0
+    ) {
+      static const ip< 128 > local_mask( "FE00::" );
+      static const ip< 128 > local( "FC00::" );
+      return local == ( local_mask & value );
+    }
+    
+    template< unsigned int length >
+    bool is_link_local( const ip< length > &value,
+      typename boost::enable_if< boost::mpl::bool_< length == 32 > >::type* = 0
+    ) {
+      static const ip< 32 > link_local_mask( "255.255.0.0" );
+      static const ip< 32 > link_local( "169.254.0.0" );
+      return link_local == ( link_local_mask & value );
+    }
+
+    template< unsigned int length >
+    bool is_link_local( const ip< length > &value,
+      typename boost::enable_if< boost::mpl::bool_< length == 128 > >::type* = 0
+    ) {
+      static const ip< 128 > link_local_mask( "FFC0::" );
+      static const ip< 128 > link_local( "FE80::" );
+      return link_local == ( link_local_mask & value );
+    }
 }
 
 #endif
