@@ -90,7 +90,8 @@ namespace hermit {
                 ( hexseq >> "::" >> hexseq )[ _val = boost::phoenix::bind( &build_partial_ipv6_address, true, _1, _2 ) ] |
                 ( hexseq >> omit[ "::" ] )[ _val = boost::phoenix::bind( &build_partial_ipv6_address, true,  _1, std::vector< uint16_t >() ) ] |
                 ( "::" >> hexseq )[ _val = boost::phoenix::bind( &build_partial_ipv6_address, true, std::vector< uint16_t >(), _1 ) ] |
-                hexseq[ _val = boost::phoenix::bind( &build_partial_ipv6_address, false, _1, std::vector< uint16_t >() ) ];
+                hexseq[ _val = boost::phoenix::bind( &build_partial_ipv6_address, false, _1, std::vector< uint16_t >() ) ] |
+                ( lit( "::" ) )[ _val = boost::phoenix::bind( &build_partial_ipv6_address, true, std::vector< uint16_t >(), std::vector< uint16_t >() ) ];
               hexseq = hex4_p >> *( ':' >> hex4_p );
             }
           private:
@@ -109,7 +110,6 @@ namespace hermit {
                   ) {
                 static const unsigned int width = is_partial ? 96 :128; 
                 std::vector< uint16_t > temp( width / 16 );
-                std::fill( temp.begin(), temp.end(), static_cast< uint16_t >( 0 ) );
                 std::pair< uint64_t, uint64_t > ipv6_value = std::make_pair( 0ull, 0ull );
                 if(
                     ( !boost::fusion::at_c< 0 >( v6 ) && boost::fusion::at_c< 1 >( v6 ).size() + boost::fusion::at_c< 2 >( v6 ).size() == temp.size() ) ||
