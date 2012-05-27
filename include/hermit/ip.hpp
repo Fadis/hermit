@@ -10,8 +10,10 @@
 namespace hermit {
   namespace detail {
     boost::optional< uint32_t > str2ipv4( const std::string &str );
+    boost::optional< std::pair< uint32_t, uint32_t > > str2ipv4segment( const std::string &str );
     boost::optional< std::pair< uint64_t, uint64_t > > str2ipv6( const std::string &str );
-
+    boost::optional< std::pair< std::pair< uint64_t, uint64_t >, std::pair< uint64_t, uint64_t > > > str2ipv6segment( const std::string &str );
+    
     template< unsigned int length >
     typename uint_t< length >::least str2ip( const std::string &str,
       typename boost::enable_if< boost::mpl::bool_< length == 32 > >::type* = 0
@@ -19,7 +21,7 @@ namespace hermit {
       boost::optional< uint32_t > temp = str2ipv4( str );
       if( !temp )
         throw std::runtime_error( "Invalid Syntax" );
-        typename uint_t< length >::least value = *temp;
+      typename uint_t< length >::least value = *temp;
       return value;
     }
 
@@ -34,6 +36,34 @@ namespace hermit {
       value <<= 64;
       value |= (*temp).second;
       return value;
+    }
+
+    template< unsigned int length >
+    typename std::pair< typename uint_t< length >::least, typename uint_t< length >::least > str2ipsegment( const std::string &str,
+      typename boost::enable_if< boost::mpl::bool_< length == 32 > >::type* = 0
+    ) {
+      auto temp = str2ipv4segment( str );
+      if( !temp )
+        throw std::runtime_error( "Invalid Syntax" );
+      typename uint_t< length >::least address = (*temp).first;
+      typename uint_t< length >::least mask = (*temp).second;
+      return std::make_pair( address, mask );
+    }
+
+    template< unsigned int length >
+    typename std::pair< typename uint_t< length >::least, typename uint_t< length >::least > str2ipsegment( const std::string &str,
+      typename boost::enable_if< boost::mpl::bool_< length == 128 > >::type* = 0
+    ) {
+      auto temp = str2ipv6segment( str );
+      if( !temp )
+        throw std::runtime_error( "Invalid Syntax" );
+      typename uint_t< length >::least address = (*temp).first.first;
+      address <<= 64;
+      address |= (*temp).first.second;
+      typename uint_t< length >::least mask = (*temp).second.first;
+      mask <<= 64;
+      mask |= (*temp).second.second;
+      return std::make_pair( address, mask );
     }
 
     template< unsigned int length >
@@ -65,7 +95,7 @@ namespace hermit {
     }
 
   }
-
+  
   template< unsigned int length >
     class ip {
       public:
@@ -137,11 +167,52 @@ namespace hermit {
         value_type value;
     };
 
+
+  template< unsigned int length >
+    class ip_segment {
+      public:
+        typedef typename uint_t< length >::least value_type;
+        ip_segment() {}
+        ip_segment( std::pair< value_type, value_type > value ) : address( value.first ), mask( value.second ) {}
+        ip_segment( const std::string &str ) {
+          const std::pair< typename uint_t< length >::least, typename uint_t< length >::least > temp = detail::str2ipsegment< length >( str );
+          address = temp.first;
+          mask = temp.second;
+        }
+        template< typename AddrType, typename MaskType >
+        ip_segment( AddrType address_, MaskType mask_ ) : address( address_ ), mask( mask_ ) {}
+        bool operator==( const ip<length> &right ) const {
+          return address == right.address && mask == right.mask;
+        }
+        bool operator!=( const ip<length> &right ) const {
+          return address != right.address || mask != right.mask;
+        }
+        bool contains( ip< length > address_ ) const {
+          return address == ( mask & address_ );
+        }
+        const ip< length > &get_address() const {
+          return address;
+        }
+        const ip< length > &get_mask() const {
+          return mask;
+        }
+      private:
+        ip< length > address;
+        ip< length > mask;
+    };
+
     template< unsigned int length >
     std::istream &operator>>( std::istream &stream, ip< length > &value ) {
       std::string temp;
       stream >> temp;
       value = ip< length >( detail::str2ip< length >( temp ) );
+      return stream;
+    }
+    template< unsigned int length >
+    std::istream &operator>>( std::istream &stream, ip_segment< length > &value ) {
+      std::string temp;
+      stream >> temp;
+      value = ip_segment< length >( detail::str2ipsegment< length >( temp ) );
       return stream;
     }
     template< unsigned int length >
@@ -155,9 +226,8 @@ namespace hermit {
     bool is_loopback( const ip< length > &value,
       typename boost::enable_if< boost::mpl::bool_< length == 32 > >::type* = 0
     ) {
-      static const ip< 32 > loopback_mask( "255.0.0.0" );
-      static const ip< 32 > loopback( "127.0.0.0" );
-      return loopback == ( value & loopback_mask ); 
+      static const ip_segment< 32 > loopback( "127.0.0.0/8" );
+      return loopback.contains( value );
     }
 
     template< unsigned int length >
@@ -188,40 +258,34 @@ namespace hermit {
     bool is_local( const ip< length > &value,
       typename boost::enable_if< boost::mpl::bool_< length == 32 > >::type* = 0
     ) {
-      static const ip< 32 > local_a_mask( "255.0.0.0" );
-      static const ip< 32 > local_a( "10.0.0.0" );
-      static const ip< 32 > local_b_mask( "255.240.0.0" );
-      static const ip< 32 > local_b( "172.16.0.0" );
-      static const ip< 32 > local_c_mask( "255.255.0.0" );
-      static const ip< 32 > local_c( "192.168.0.0" );
-      return local_a == ( local_a_mask & value ) || local_b == ( local_b_mask & value ) || local_c == ( local_c_mask & value ); 
+      static const ip_segment< 32 > local_a( "10.0.0.0/8" );
+      static const ip_segment< 32 > local_b( "172.16.0.0/12" );
+      static const ip_segment< 32 > local_c( "192.168.0.0/16" );
+      return local_a.contains( value ) || local_b.contains( value ) || local_c.contains( value );
     }
 
     template< unsigned int length >
     bool is_local( const ip< length > &value,
       typename boost::enable_if< boost::mpl::bool_< length == 128 > >::type* = 0
     ) {
-      static const ip< 128 > local_mask( "FE00::" );
-      static const ip< 128 > local( "FC00::" );
-      return local == ( local_mask & value );
+      static const ip_segment< 128 > local( "FC00::/7" );
+      return local.contains( value );
     }
     
     template< unsigned int length >
     bool is_link_local( const ip< length > &value,
       typename boost::enable_if< boost::mpl::bool_< length == 32 > >::type* = 0
     ) {
-      static const ip< 32 > link_local_mask( "255.255.0.0" );
-      static const ip< 32 > link_local( "169.254.0.0" );
-      return link_local == ( link_local_mask & value );
+      static const ip_segment< 32 > link_local( "169.254.0.0/16" );
+      return link_local.contains( value );
     }
 
     template< unsigned int length >
     bool is_link_local( const ip< length > &value,
       typename boost::enable_if< boost::mpl::bool_< length == 128 > >::type* = 0
     ) {
-      static const ip< 128 > link_local_mask( "FFC0::" );
-      static const ip< 128 > link_local( "FE80::" );
-      return link_local == ( link_local_mask & value );
+      static const ip_segment< 128 > link_local( "FE80::/10" );
+      return link_local.contains( value );
     }
 }
 

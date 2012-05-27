@@ -9,6 +9,7 @@
 namespace hermit {
   namespace detail {
     boost::spirit::qi::uint_parser<uint8_t, 10, 1, 3> dec3_p; 
+    boost::spirit::qi::uint_parser<uint8_t, 10, 1, 2> dec2_p; 
     boost::spirit::qi::uint_parser<uint16_t, 16, 1, 4> hex4_p; 
 
     template< typename Iterator >
@@ -23,7 +24,7 @@ namespace hermit {
               using namespace boost::spirit::ascii;
               ipv4address = ( dec3_p >> '.' >> dec3_p >> '.' >> dec3_p >> '.' >> dec3_p )[
                 _val = boost::phoenix::bind( &build_ipv4_address, _1, _2, _3, _4 )
-                ] >> eoi;
+                ];
             }
           private:
             static uint32_t build_ipv4_address(
@@ -34,8 +35,42 @@ namespace hermit {
                 static_cast< uint32_t >( c ) << 8 |
                 static_cast< uint32_t >( d );
             }
-            uint16_t temp;
             boost::spirit::qi::rule< Iterator, uint32_t() > ipv4address;
+        };
+
+
+    template< typename Iterator >
+      class ipv4segment_rule :
+        public boost::spirit::qi::grammar<
+        Iterator,
+        std::pair< uint32_t, uint32_t >()
+        > {
+          public:
+            ipv4segment_rule() : ipv4segment_rule::base_type( root ) {
+              using namespace boost::spirit;
+              using namespace boost::spirit::ascii;
+              root = ( ipv4address >> '/' >> dec2_p )[
+                _val = boost::phoenix::bind( &build_ipv4segment, _1, _2, _pass )
+                ];
+            }
+          private:
+            static std::pair< uint32_t, uint32_t > build_ipv4segment(
+                uint32_t ip_, uint8_t mask_, bool &pass_
+                ) {
+              uint32_t mask = 1ul;
+              if( mask_ <= 32 && mask_ > 0 ) {
+                const uint32_t all = 0xFFFFFFFFul;
+                mask <<= ( 32 - mask_ );
+                mask -= 1;
+                mask = all ^ mask;
+                pass_ = ( ip_ & mask ) == ip_; 
+              }
+              else
+                pass_ = false;
+              return std::make_pair( ip_, mask );
+            }
+            ipv4_rule< Iterator > ipv4address;
+            boost::spirit::qi::rule< Iterator, std::pair< uint32_t, uint32_t >() > root;
         };
 
     template< typename Iterator, bool is_partial >
@@ -175,6 +210,53 @@ namespace hermit {
             boost::spirit::qi::rule< Iterator, std::pair< uint64_t, uint64_t >() > root;
         };
 
+
+    template< typename Iterator >
+      class ipv6segment_rule :
+        public boost::spirit::qi::grammar<
+        Iterator,
+        std::pair< std::pair< uint64_t, uint64_t >, std::pair< uint64_t, uint64_t > >()
+        > {
+          public:
+            ipv6segment_rule() : ipv6segment_rule::base_type( root ) {
+              using namespace boost::spirit;
+              using namespace boost::spirit::ascii;
+              root = ( ipv6address >> '/' >> dec3_p )[
+                _val = boost::phoenix::bind( &build_ipv6segment, _1, _2, _pass )
+                ];
+            }
+          private:
+            static std::pair< std::pair< uint64_t, uint64_t >, std::pair< uint64_t, uint64_t > > build_ipv6segment(
+                const std::pair< uint64_t, uint64_t > &ip_, uint8_t mask_, bool &pass_
+                ) {
+              if( mask_ < 64 && mask_ > 0 ) {
+                const uint64_t all = 0xFFFFFFFFFFFFFFFFull;
+                uint64_t mask = 1ull;
+                mask <<= ( 64 - mask_ );
+                mask -= 1;
+                mask = all ^ mask;
+                pass_ = ip_.second == 0x0ull && ( ip_.first & mask ) == ip_.first;
+                return std::make_pair( ip_, std::make_pair( mask, 0x0ull ) );
+              }
+              else if( mask_ < 128 && mask_ >= 64 ) {
+                const uint64_t all = 0xFFFFFFFFFFFFFFFFull;
+                uint64_t mask = 1ull;
+                mask <<= ( 128 - mask_ );
+                mask -= 1;
+                mask = all ^ mask;
+                pass_ = ( ip_.second & mask ) == ip_.second;
+                return std::make_pair( ip_, std::make_pair( 0xFFFFFFFFFFFFFFFFull, mask ) );
+              }
+              else {
+                pass_ = false;
+                return std::make_pair( ip_, std::make_pair( 0x0ull, 0x0ull ) );
+              }
+            }
+            ipv6_phase1_rule< Iterator > ipv6address;
+            boost::spirit::qi::rule< Iterator, std::pair< std::pair< uint64_t, uint64_t >, std::pair< uint64_t, uint64_t > >() > root;
+        };
+
+
     boost::optional< uint32_t > str2ipv4( const std::string &str ) {
       uint32_t result;
       ipv4_rule< std::string::const_iterator > rule;
@@ -185,6 +267,17 @@ namespace hermit {
         return boost::optional< uint32_t >();
     }
 
+    boost::optional< std::pair< uint32_t, uint32_t > > str2ipv4segment( const std::string &str ) {
+      std::pair< uint32_t, uint32_t > result;
+      ipv4segment_rule< std::string::const_iterator > rule;
+      std::string::const_iterator iter = str.begin();
+      if( boost::spirit::qi::parse( iter, str.end(), rule, result ) && iter == str.end() ) {
+        return result;
+      }
+      else
+        return boost::optional< std::pair< uint32_t, uint32_t > >();
+    }
+
     boost::optional< std::pair< uint64_t, uint64_t > > str2ipv6( const std::string &str ) {
       std::pair< uint64_t, uint64_t > result;
       ipv6_phase1_rule< std::string::const_iterator > rule;
@@ -193,6 +286,17 @@ namespace hermit {
         return result;
       else
         return boost::optional< std::pair< uint64_t, uint64_t > >();
+    }
+    
+    boost::optional< std::pair< std::pair< uint64_t, uint64_t >, std::pair< uint64_t, uint64_t > > > str2ipv6segment( const std::string &str ) {
+      std::pair< std::pair< uint64_t, uint64_t >, std::pair< uint64_t, uint64_t > > result;
+      ipv6segment_rule< std::string::const_iterator > rule;
+      std::string::const_iterator iter = str.begin();
+      if( boost::spirit::qi::parse( iter, str.end(), rule, result ) && iter == str.end() ) {
+        return result;
+      }
+      else
+        return boost::optional< std::pair< std::pair< uint64_t, uint64_t >, std::pair< uint64_t, uint64_t > > >();
     }
   }
 }
