@@ -109,14 +109,21 @@ namespace hermit {
         authority_parser() : authority_parser::base_type( root ) {
           using namespace boost::spirit;
           using namespace boost::spirit::ascii;
-          root = ( -( userinfo_ >> '@' ) >> host_ >> -( ':' >> dec5_p ) )[
+          root = ( userinfo_ >> '@' >> host_ >> -( ':' >> dec5_p ) )[
             _val = boost::phoenix::bind( &build_authority, _1, _2, _3 )
+          ] |
+           ( host_ >> -( ':' >> dec5_p ) )[
+            _val = boost::phoenix::bind( &build_authority, _1, _2 )
           ];
         }
       private:
-        static authority build_authority( const boost::optional< userinfo > &ui_, const host &host_, boost::optional< port > port_ ) {
+        static authority build_authority( const userinfo &ui_, const host &host_, boost::optional< port > port_ ) {
          //broken
           return authority( ui_, host_, port_ );
+        }
+        static authority build_authority( const host &host_, boost::optional< port > port_ ) {
+         //broken
+          return authority( boost::optional< userinfo >(), host_, port_ );
         }
         userinfo_parser< Iterator > userinfo_;
         host_parser< Iterator > host_;

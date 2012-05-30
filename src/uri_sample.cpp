@@ -8,7 +8,7 @@ int main() {
   std::cin >> str;
   std::string::iterator it = str.begin();
   hermit::authority result;
-  if( boost::spirit::qi::parse(it, str.end(), foo, result ) ) {
+  if( boost::spirit::qi::parse(it, str.end(), foo, result ) & it == str.end() ) {
     std::cout << "Valid" << std::endl;
     if( result.get_userinfo() )
       std::cout << "username : " << (*result.get_userinfo())[ 0 ] << std::endl;
