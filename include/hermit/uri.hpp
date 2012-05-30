@@ -21,10 +21,10 @@ namespace hermit {
 
   typedef std::string reg_name;
 
-  boost::spirit::qi::uint_parser<uint16_t, 16, 1, 2> hex2_p;
+  boost::spirit::qi::uint_parser<uint8_t, 16, 1, 2> hex2_p;
   boost::spirit::qi::uint_parser<uint16_t, 10, 1, 5> dec5_p;
   template< typename Iterator >
-    class reg_name_parser : boost::spirit::qi::grammar< Iterator, reg_name() > {
+    class reg_name_parser : public boost::spirit::qi::grammar< Iterator, reg_name() > {
       public:
         reg_name_parser() : reg_name_parser::base_type( root ) {
           using namespace boost::spirit;
@@ -45,7 +45,7 @@ namespace hermit {
   typedef boost::variant< ipv4, ipv6, reg_name > host;
 
   template< typename Iterator >
-    class host_parser : boost::spirit::qi::grammar< Iterator, host() > {
+    class host_parser : public boost::spirit::qi::grammar< Iterator, host() > {
       public:
         host_parser() : host_parser::base_type( root ) {
           using namespace boost::spirit;
@@ -64,7 +64,7 @@ namespace hermit {
   typedef std::vector< std::string > userinfo;
 
   template< typename Iterator >
-    class userinfo_parser : boost::spirit::qi::grammar< Iterator, userinfo() > {
+    class userinfo_parser : public boost::spirit::qi::grammar< Iterator, userinfo() > {
       public:
         userinfo_parser() : userinfo_parser::base_type( root ) {
           using namespace boost::spirit;
@@ -86,36 +86,37 @@ namespace hermit {
 
   class authority {
     public:
-      authority( const userinfo &userinfo__, const host &host__, port port__ ) : userinfo_( userinfo__ ), host_( host__ ), port_( port__ ) {}
-      const userinfo &get_userinfo() const {
+      authority() {}
+      authority( const boost::optional< userinfo > &userinfo__, const host &host__, const boost::optional< port > &port__ ) : userinfo_( userinfo__ ), host_( host__ ), port_( port__ ) {}
+      const boost::optional< userinfo > &get_userinfo() const {
         return userinfo_;
       }
       const host &get_host() const {
         return host_;
       }
-      port get_port() const {
+      const boost::optional< port > &get_port() const {
         return port_;
       }
     private:
-      userinfo userinfo_;
+      boost::optional< userinfo > userinfo_;
       host host_;
-      port port_;
+      boost::optional< port > port_;
   };
 
   template< typename Iterator >
-    class authority_parser : boost::spirit::qi::grammar< Iterator, authority() > {
+    class authority_parser : public boost::spirit::qi::grammar< Iterator, authority() > {
       public:
         authority_parser() : authority_parser::base_type( root ) {
           using namespace boost::spirit;
           using namespace boost::spirit::ascii;
-          root = -( userinfo_ >> '@' ) >> host_ >> -( ':' >> dec5_p )[
+          root = ( -( userinfo_ >> '@' ) >> host_ >> -( ':' >> dec5_p ) )[
             _val = boost::phoenix::bind( &build_authority, _1, _2, _3 )
           ];
         }
       private:
         static authority build_authority( const boost::optional< userinfo > &ui_, const host &host_, boost::optional< port > port_ ) {
          //broken
-          return authority( *ui_, host_, *port_ );
+          return authority( ui_, host_, port_ );
         }
         userinfo_parser< Iterator > userinfo_;
         host_parser< Iterator > host_;
