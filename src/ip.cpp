@@ -10,6 +10,6 @@ namespace hermit {
   namespace detail {
     boost::spirit::qi::uint_parser<uint8_t, 10, 1, 3> dec3_p;
     boost::spirit::qi::uint_parser<uint8_t, 10, 1, 2> dec2_p;
-    boost::spirit::qi::uint_parser<uint16_t, 16, 1, 4> hex4_p;
+    boost::spirit::qi::uint_parser<uint8_t, 16, 1, 4> hex4_p;
   }
 }
