@@ -4,6 +4,7 @@
 
 int main() {
   hermit::authority_parser< std::string::iterator > foo;
+  hermit::path_parser< std::string::iterator, true, false > bar;
   std::string str;
   std::cin >> str;
   std::string::iterator it = str.begin();
