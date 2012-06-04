@@ -111,10 +111,10 @@ namespace hermit {
           using namespace boost::spirit::ascii;
           root = ( userinfo_ >> '@' >> host_ >> -( ':' >> dec5_p ) )[
             _val = boost::phoenix::bind( &build_authority, _1, _2, _3 )
-          ] |
-           ( host_ >> -( ':' >> dec5_p ) )[
+            ] |
+            ( host_ >> -( ':' >> dec5_p ) )[
             _val = boost::phoenix::bind( &build_authority, _1, _2 )
-          ];
+            ];
         }
       private:
         static authority build_authority( const userinfo &ui_, const host &host_, boost::optional< port > port_ ) {
@@ -179,6 +179,29 @@ namespace hermit {
         segment_parser< Iterator, true, true > segment_nz_nc;
         boost::spirit::qi::rule< Iterator, std::vector< segment >() > root; 
     };
+
+  typedef std::string query_type;
+
+  template< typename Iterator >
+    class query_parser : public boost::spirit::qi::grammar< Iterator, query_type() > {
+        query_parser() : query_parser::base_type( root ) {
+          using namespace boost::spirit;
+          using namespace boost::spirit::ascii;
+
+          sub_delims = char_("!$&'()*+,;=");
+          unreserved = alnum | char_("-._~");
+          pct_encoded = '%' >> hex2_p;
+          pchar = sub_delims|unreserved|pct_encoded|char_(":@");
+          root = *( pchar | char_("/?") );
+        }
+      private:
+        boost::spirit::qi::rule< Iterator, char() > sub_delims; 
+        boost::spirit::qi::rule< Iterator, char() > unreserved; 
+        boost::spirit::qi::rule< Iterator, char() > pct_encoded; 
+        boost::spirit::qi::rule< Iterator, char() > pchar; 
+        boost::spirit::qi::rule< Iterator, segment() > root; 
+    };
+
 
 }
 
