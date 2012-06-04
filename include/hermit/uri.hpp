@@ -13,6 +13,7 @@
 #include <boost/spirit/home/support/container.hpp>
 #include <boost/optional.hpp>
 #include <boost/fusion/container/vector.hpp>
+#include <boost/filesystem/path.hpp>
 #include <vector>
 #include <string>
 #include <utility>
@@ -158,32 +159,59 @@ namespace hermit {
     };
 
   template< typename Iterator, bool absolute, bool accept_empty >
-    class path_parser : public boost::spirit::qi::grammar< Iterator, std::vector< segment >() > {
+    class path_parser : public boost::spirit::qi::grammar< Iterator, boost::filesystem::path() > {
       public:
         path_parser() : path_parser::base_type( root ) {
           using namespace boost::spirit;
           using namespace boost::spirit::ascii;
           if( absolute ) {
             if( accept_empty )
-              root = *( '/' >> segment_ );
+              root = ( *( '/' >> segment_ ) )[
+                _val = boost::phoenix::bind( &create_absolute_path, _1 )
+              ];
             else
-              root = '/' >> segment_nz >> *( '/' >> segment_ );
+              root = ( '/' >> segment_nz >> *( '/' >> segment_ ) )[
+                _val = boost::phoenix::bind( &create_absolute_path, _1, _2 )
+              ];
           }
           else {
-            root = segment_nz >> *( '/' >> segment_ );
+            root = ( segment_nz >> *( '/' >> segment_ ) )[
+              _val = boost::phoenix::bind( &create_relative_path, _1, _2 )
+            ];
           }
         }
       private:
+        static boost::filesystem::path create_absolute_path( const std::vector< std::string > &segs ) {
+          boost::filesystem::path temp( "/" );
+          for( auto elem: segs )
+            temp /= elem;
+          return temp;
+        }
+        static boost::filesystem::path create_absolute_path( const std::string &head, const std::vector< std::string > &segs ) {
+          boost::filesystem::path temp( "/" );
+          temp /= head;
+          for( auto elem: segs )
+            temp /= elem;
+          return temp;
+        }
+        static boost::filesystem::path create_relative_path( const std::string &head, const std::vector< std::string > &segs ) {
+          boost::filesystem::path temp( "./" );
+          temp /= head;
+          for( auto elem: segs )
+            temp /= elem;
+          return temp;
+        }
         segment_parser< Iterator, false, false > segment_; 
         segment_parser< Iterator, true, false > segment_nz; 
         segment_parser< Iterator, true, true > segment_nz_nc;
-        boost::spirit::qi::rule< Iterator, std::vector< segment >() > root; 
+        boost::spirit::qi::rule< Iterator, boost::filesystem::path() > root; 
     };
 
   typedef std::string query_type;
 
   template< typename Iterator >
     class query_parser : public boost::spirit::qi::grammar< Iterator, query_type() > {
+      public:
         query_parser() : query_parser::base_type( root ) {
           using namespace boost::spirit;
           using namespace boost::spirit::ascii;
@@ -199,9 +227,100 @@ namespace hermit {
         boost::spirit::qi::rule< Iterator, char() > unreserved; 
         boost::spirit::qi::rule< Iterator, char() > pct_encoded; 
         boost::spirit::qi::rule< Iterator, char() > pchar; 
-        boost::spirit::qi::rule< Iterator, segment() > root; 
+        boost::spirit::qi::rule< Iterator, query_type() > root; 
     };
 
+  typedef std::string fragment_type;
+  
+  template< typename Iterator >
+    class fragment_parser : public boost::spirit::qi::grammar< Iterator, fragment_type() > {
+      public:
+        fragment_parser() : fragment_parser::base_type( root ) {
+          using namespace boost::spirit;
+          using namespace boost::spirit::ascii;
+
+          sub_delims = char_("!$&'()*+,;=");
+          unreserved = alnum | char_("-._~");
+          pct_encoded = '%' >> hex2_p;
+          pchar = sub_delims|unreserved|pct_encoded|char_(":@");
+          root = *( pchar | char_("/?") );
+        }
+      private:
+        boost::spirit::qi::rule< Iterator, char() > sub_delims; 
+        boost::spirit::qi::rule< Iterator, char() > unreserved; 
+        boost::spirit::qi::rule< Iterator, char() > pct_encoded; 
+        boost::spirit::qi::rule< Iterator, char() > pchar; 
+        boost::spirit::qi::rule< Iterator, fragment_type() > root; 
+    };
+
+  typedef std::string scheme_type;
+
+  template< typename Iterator >
+    class scheme_parser : public boost::spirit::qi::grammar< Iterator, scheme_type() > {
+      public:
+        scheme_parser() : scheme_parser::base_type( root ) {
+          using namespace boost::spirit;
+          using namespace boost::spirit::ascii;
+
+          root = +( alnum|char_("+-.") );
+        }
+      private:
+        boost::spirit::qi::rule< Iterator, scheme_type() > root; 
+    };
+
+  class uri {
+    public:
+      uri() {}
+      uri( const scheme_type &scheme_, const boost::optional< authority > &authority__, const boost::filesystem::path &path_, const boost::optional< query_type > &query_, const boost::optional< fragment_type > &fragment_ )
+      : scheme( scheme_ ), authority_( authority__ ), path( path_ ), query( query_ ), fragment( fragment_ ) {}
+      const boost::optional< authority > &get_authority() const {
+        return authority_;
+      }
+      const boost::filesystem::path &get_path() const {
+        return path;
+      }
+    private:
+      scheme_type scheme;
+      boost::optional< authority > authority_;
+      boost::filesystem::path path;
+      boost::optional< query_type > query;
+      boost::optional< fragment_type > fragment;
+  };
+
+  typedef std::pair< boost::optional< authority >, boost::filesystem::path > hier_type;
+
+  template< typename Iterator >
+    class uri_parser : public boost::spirit::qi::grammar< Iterator, uri() > {
+      public:
+        uri_parser() : uri_parser::base_type( root ) {
+          using namespace boost::spirit;
+          using namespace boost::spirit::ascii;
+          hier_part = ( "//" >> authority_ >> path_abempty ) [
+            _val = boost::phoenix::bind( &create_hier_part, _1, _2 )
+          ];
+
+          root = ( scheme >> ':' >> hier_part >> -( '?' >> query ) >> -( '#' >> fragment ) )[
+            _val = boost::phoenix::bind( &create_uri, _1, _2, _3, _4 )
+          ];
+        }
+      private:
+        static uri create_uri( const scheme_type &scheme, const hier_type &hier, const boost::optional< query_type > &query, const boost::optional< fragment_type > &fragment ) {
+          return uri( scheme, hier.first, hier.second, query, fragment );
+        }
+        static hier_type create_hier_part( const boost::optional< authority > &authority_, const boost::filesystem::path &path_ ) {
+          return std::make_pair( authority_, path_ );
+        }
+        path_parser< Iterator, true, true > path_abempty;
+        path_parser< Iterator, true, false > path_absolute;
+        path_parser< Iterator, false, false > path_rootless;
+        authority_parser< Iterator > authority_;
+        scheme_parser< Iterator > scheme;
+        query_parser< Iterator > query;
+        fragment_parser< Iterator > fragment;
+        //////////////
+        boost::spirit::qi::rule< Iterator, hier_type() > hier_part;
+        boost::spirit::qi::rule< Iterator, uri() > root;
+    };
 
 }
 
