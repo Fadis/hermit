@@ -1,6 +1,7 @@
 #include <hermit/uri.hpp>
 #include <string>
 #include <boost/spirit/include/qi.hpp>
+#include <boost/filesystem/path.hpp>
 
 int main() {
   hermit::authority_parser< std::string::iterator > foo;
@@ -15,6 +16,7 @@ int main() {
   hermit::uri result;
   if( boost::spirit::qi::parse(it, str.end(), goo, result ) & it == str.end() ) {
     std::cout << "Valid" << std::endl;
+    std::cout << "scheme : " << result.get_scheme() << std::endl;
     if( result.get_authority() ) {
       hermit::authority authority_ = *result.get_authority();
       if( authority_.get_userinfo() )
@@ -28,6 +30,15 @@ int main() {
       if( authority_.get_port() )
         std::cout << "port : " << *authority_.get_port() << std::endl;
     }
+    std::cout << "path : " << result.get_path().string() << " ";
+    if( result.get_path().is_absolute() )
+      std::cout << "(absolute)" << std::endl;
+    else
+      std::cout << "(relative)" << std::endl;
+    if( result.get_query() )
+      std::cout << "query : " << *result.get_query() << std::endl;
+    if( result.get_fragment() )
+      std::cout << "fragment : " << *result.get_fragment() << std::endl;
   }
   else
     std::cout << "Invalid" << std::endl;

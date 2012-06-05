@@ -146,9 +146,9 @@ namespace hermit {
           else
             pchar = sub_delims|unreserved|pct_encoded|char_(":@");
           if( nz )
-            root = *pchar;
-          else
             root = +pchar;
+          else
+            root = *pchar;
         }
       private:
         boost::spirit::qi::rule< Iterator, char() > sub_delims; 
@@ -170,7 +170,7 @@ namespace hermit {
                 _val = boost::phoenix::bind( &create_absolute_path, _1 )
               ];
             else
-              root = ( '/' >> segment_nz >> *( '/' >> segment_ ) )[
+              root = ( '/' >> segment_ >> *( '/' >> segment_ ) )[
                 _val = boost::phoenix::bind( &create_absolute_path, _1, _2 )
               ];
           }
@@ -195,8 +195,7 @@ namespace hermit {
           return temp;
         }
         static boost::filesystem::path create_relative_path( const std::string &head, const std::vector< std::string > &segs ) {
-          boost::filesystem::path temp( "./" );
-          temp /= head;
+          boost::filesystem::path temp( head );
           for( auto elem: segs )
             temp /= elem;
           return temp;
@@ -273,11 +272,20 @@ namespace hermit {
       uri() {}
       uri( const scheme_type &scheme_, const boost::optional< authority > &authority__, const boost::filesystem::path &path_, const boost::optional< query_type > &query_, const boost::optional< fragment_type > &fragment_ )
       : scheme( scheme_ ), authority_( authority__ ), path( path_ ), query( query_ ), fragment( fragment_ ) {}
+      const scheme_type &get_scheme() const {
+        return scheme;
+      }
       const boost::optional< authority > &get_authority() const {
         return authority_;
       }
       const boost::filesystem::path &get_path() const {
         return path;
+      }
+      const boost::optional< query_type > &get_query() const {
+        return query;
+      }
+      const boost::optional< fragment_type > &get_fragment() const {
+        return fragment;
       }
     private:
       scheme_type scheme;
@@ -297,6 +305,12 @@ namespace hermit {
           using namespace boost::spirit::ascii;
           hier_part = ( "//" >> authority_ >> path_abempty ) [
             _val = boost::phoenix::bind( &create_hier_part, _1, _2 )
+          ] |
+          path_absolute[
+            _val = boost::phoenix::bind( &create_hier_part, boost::optional< authority >(), _1 )
+          ] |
+          path_rootless[
+            _val = boost::phoenix::bind( &create_hier_part, boost::optional< authority >(), _1 )
           ];
 
           root = ( scheme >> ':' >> hier_part >> -( '?' >> query ) >> -( '#' >> fragment ) )[
@@ -317,7 +331,6 @@ namespace hermit {
         scheme_parser< Iterator > scheme;
         query_parser< Iterator > query;
         fragment_parser< Iterator > fragment;
-        //////////////
         boost::spirit::qi::rule< Iterator, hier_type() > hier_part;
         boost::spirit::qi::rule< Iterator, uri() > root;
     };
