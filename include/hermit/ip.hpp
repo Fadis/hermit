@@ -103,7 +103,7 @@ namespace hermit {
                 ( "::" >> hexseq )[ _val = boost::phoenix::bind( &build_partial_ipv6_address, true, std::vector< uint16_t >(), _1 ) ] |
                 hexseq[ _val = boost::phoenix::bind( &build_partial_ipv6_address, false, _1, std::vector< uint16_t >() ) ] |
                 ( lit( "::" ) )[ _val = boost::phoenix::bind( &build_partial_ipv6_address, true, std::vector< uint16_t >(), std::vector< uint16_t >() ) ];
-              hexseq = hex4_p >> *( ':' >> hex4_p );
+              hexseq = hex4_p >> *( omit[char_(':')] >> hex4_p );
             }
           private:
             static boost::fusion::vector< bool, std::vector< uint16_t >, std::vector< uint16_t > >
@@ -405,6 +405,9 @@ namespace hermit {
           typename boost::enable_if< boost::spirit::traits::is_container< String > >::type* = 0
         ) : value( detail::str2ip< length >( value_ ) ) {
         }
+        ip( const char *value_
+        ) : value( detail::str2ip< length >( std::string( value_ ) ) ) {
+        }
         ip( const value_type &value_ ) : value( value_ & get_mask() ) {
         }
         ip<length> operator|( const ip<length> &right ) const {
@@ -480,6 +483,11 @@ namespace hermit {
         template< typename String >
         ip_segment( const String &str,
           typename boost::enable_if< boost::spirit::traits::is_container< String > >::type* = 0 ) {
+          const std::pair< typename uint_t< length >::least, typename uint_t< length >::least > temp = detail::str2ipsegment< length >( str );
+          address = temp.first;
+          mask = temp.second;
+        }
+        ip_segment( const char *str ) {
           const std::pair< typename uint_t< length >::least, typename uint_t< length >::least > temp = detail::str2ipsegment< length >( str );
           address = temp.first;
           mask = temp.second;
