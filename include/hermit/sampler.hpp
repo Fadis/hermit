@@ -1,0 +1,4 @@
+#ifndef HERMIT_SAMPLER_T_HPP
+#define HERMIT_SAMPLER_T_HPP
+
+#endif

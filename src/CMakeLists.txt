@@ -12,6 +12,7 @@ target_link_libraries( ip_sample hermit_ip )
 ADD_EXECUTABLE( uri_sample uri_sample.cpp )
 target_link_libraries( uri_sample hermit_ip )
 target_link_libraries( uri_sample ${Boost_LIBRARIES} )
+ADD_EXECUTABLE( simd_sample simd_sample.cpp )
 
 install( TARGETS hermit_mpint hermit_ip
   RUNTIME DESTINATION bin
