@@ -27,7 +27,7 @@
 #ifndef HERMIT_MPINT_HPP
 #define HERMIT_MPINT_HPP
 
-#include <cstdint>
+#include <boost/cstdint.hpp>
 #include <string>
 #include <boost/lexical_cast.hpp>
 #include <boost/type_traits.hpp>

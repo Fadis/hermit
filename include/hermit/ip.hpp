@@ -186,7 +186,7 @@ namespace hermit {
                 ipv6_phase2_rule< std::string::const_iterator, true > ipv6address;
                 std::pair< uint64_t, uint64_t > ipv6_value;
                 std::string::const_iterator ipv6_iter = serial.begin();
-                if( boost::spirit::qi::parse( ipv6_iter, serial.cend(), ipv6address, ipv6_value ) && ipv6_iter == serial.end() ) {
+                if( boost::spirit::qi::parse( ipv6_iter, static_cast< std::string::const_iterator >( serial.end() ), ipv6address, ipv6_value ) && ipv6_iter == serial.end() ) {
                   ipv6_value.second |= ipv4_value;
                   pass = true;
                   return ipv6_value;
@@ -208,7 +208,7 @@ namespace hermit {
                 ipv6_phase2_rule< std::string::const_iterator, false > ipv6address;
                 std::pair< uint64_t, uint64_t > ipv6_value;
                 std::string::const_iterator ipv6_iter = serial.begin();
-                if( boost::spirit::qi::parse( ipv6_iter, serial.cend(), ipv6address, ipv6_value ) && ipv6_iter == serial.end() ) {
+                if( boost::spirit::qi::parse( ipv6_iter, static_cast< std::string::const_iterator >( serial.end() ), ipv6address, ipv6_value ) && ipv6_iter == serial.end() ) {
                   pass = true;
                   return ipv6_value;
                 }

@@ -24,7 +24,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#include <cstdint>
+
+#include <boost/cstdint.hpp>
 #include <vector>
 #include <string>
 #include <boost/spirit/include/qi.hpp>
