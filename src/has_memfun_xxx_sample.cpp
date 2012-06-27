@@ -14,7 +14,7 @@
 #include <hermit/has_memfun_xxx.hpp>
 
 
-HPP_MEMFUN_XXX( assign )
+HPP_MEMFUN_XXX( detect_memfun_assign, assign )
    
 class Moo {};
 class Woo {

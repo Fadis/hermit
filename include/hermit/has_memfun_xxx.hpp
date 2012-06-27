@@ -18,51 +18,51 @@
 
 #include <hermit/to_member_function.hpp>
 
-#define HPP_MEMFUN_XXX( name ) \
+#define HPP_MEMFUN_XXX( metafunc_name, name ) \
   namespace detail { \
     namespace detail { \
       namespace detail { \
         namespace detail { \
           namespace detail { \
             template< typename Func, typename T > \
-            auto BOOST_PP_CAT( detect_memfun_, name ) BOOST_PP_LPAREN() T* t ) -> decltype( \
+            auto metafunc_name BOOST_PP_LPAREN() T* t ) -> decltype( \
               static_cast< Func >( &T:: name ), void(), boost::mpl::bool_< true >() \
             ); \
             template< typename Func > \
-            boost::mpl::bool_< false > BOOST_PP_CAT( detect_memfun_, name ) BOOST_PP_LPAREN() ... ); \
+            boost::mpl::bool_< false > metafunc_name BOOST_PP_LPAREN() ... ); \
           } \
           template< typename T, typename Func, typename Result = \
             decltype( \
-              detail:: BOOST_PP_CAT( detect_memfun_, name ) \
+              detail:: metafunc_name \
               < typename to_member_function< Func, T >::type > \
               BOOST_PP_LPAREN() static_cast< T* >( nullptr ) ) ) \
           > \
-          struct BOOST_PP_CAT( detect_memfun_, name ) : public boost::mpl::bool_< Result::value > {}; \
+          struct metafunc_name : public boost::mpl::bool_< Result::value > {}; \
         } \
         template< typename T, typename Func > \
-        struct BOOST_PP_CAT( detect_memfun_, name ) : \
+        struct metafunc_name : \
           public boost::mpl::bool_< \
-            detail:: BOOST_PP_CAT( detect_memfun_, name ) < T, Func >::value \
+            detail:: metafunc_name < T, Func >::value \
           > { \
         }; \
       } \
       template< typename Func, typename T > \
-      BOOST_PP_CAT( detail::detect_memfun_, name ) < T, Func > BOOST_PP_CAT( detect_memfun_, name ) BOOST_PP_LPAREN() T* t, typename boost::disable_if< typename boost::is_pod< T >::type >::type* = 0 ); \
+      detail:: metafunc_name < T, Func > metafunc_name BOOST_PP_LPAREN() T* t, typename boost::disable_if< typename boost::is_pod< T >::type >::type* = 0 ); \
       template< typename Func > \
-      boost::mpl::bool_< false > BOOST_PP_CAT( detect_memfun_, name ) BOOST_PP_LPAREN() ... ); \
+      boost::mpl::bool_< false > metafunc_name BOOST_PP_LPAREN() ... ); \
     } \
     template< typename T, typename Func, typename Result = \
       decltype( \
-        detail:: BOOST_PP_CAT( detect_memfun_, name ) \
+        detail:: metafunc_name \
           < Func > \
           BOOST_PP_LPAREN() static_cast< T* >( nullptr ) ) ) \
         > \
-    struct BOOST_PP_CAT( detect_memfun_, name ) : public boost::mpl::bool_< Result::value > {}; \
+    struct metafunc_name : public boost::mpl::bool_< Result::value > {}; \
   } \
   template< typename T, typename Func > \
-  struct BOOST_PP_CAT( detect_memfun_, name ) : \
+  struct metafunc_name : \
     public boost::mpl::bool_< \
-      detail:: BOOST_PP_CAT( detect_memfun_, name ) < T, Func >::value \
+      detail:: metafunc_name < T, Func >::value \
     > { \
   }; \
 

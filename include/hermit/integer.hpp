@@ -12,7 +12,7 @@
 
 namespace hermit {
   namespace detail {
-    FPP_HAS_TYPE_XXX( exact );
+    FPP_HAS_TYPE_XXX( has_type_exact, exact );
 
     template< unsigned int bits >
       struct uint_exact_is_available : public has_type_exact< boost::uint_t< bits > >::type {};
