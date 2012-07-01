@@ -53,6 +53,7 @@ int main() {
   std::cout << detect_hoge< O >::value << " ";
   std::cout << detect_hoge< P >::value << " ";
   std::cout << detect_hoge< Q >::value << " ";
+  std::cout << detect_hoge< R >::value << " ";
   std::cout << detect_hoge< int >::value << std::endl;
   std::cout << "detect_hoge< T, int >" << std::endl;
   std::cout << detect_hoge< A, int >::value << " ";
@@ -72,6 +73,7 @@ int main() {
   std::cout << detect_hoge< O, int >::value << " ";
   std::cout << detect_hoge< P, int >::value << " ";
   std::cout << detect_hoge< Q, int >::value << " ";
+  std::cout << detect_hoge< R, int >::value << " ";
   std::cout << detect_hoge< int, int >::value << std::endl;
   std::cout << "detect_hoge< T, void( float*, float* ) >" << std::endl;
   std::cout << detect_hoge< A, void( float*, float* ) >::value << " ";
@@ -94,7 +96,5 @@ int main() {
   std::cout << detect_hoge< R, void( float*, float* ) >::value << " ";
   std::cout << detect_hoge< int, void( float*, float* ) >::value << std::endl;
 
-  int status;
-  std::cout << abi::__cxa_demangle( typeid( &R::hoge ).name(), 0, 0, &status ) << std::endl;
 }
 
