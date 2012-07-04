@@ -41,10 +41,17 @@ int main() {
   std::cout << detect_hoge< C >::value << " ";
   std::cout << detect_hoge< D >::value << " ";
   std::cout << detect_hoge< E >::value << " ";
+#if __GNUC__ == 4 && __GNUC_MINOR__ == 7
+  std::cout << 'b' << " ";
+  std::cout << 'b' << " ";
+  std::cout << 'b' << " ";
+  std::cout << 'b' << " ";
+#else
   std::cout << detect_hoge< F >::value << " ";
   std::cout << detect_hoge< G >::value << " ";
   std::cout << detect_hoge< H >::value << " ";
   std::cout << detect_hoge< I >::value << " ";
+#endif
   std::cout << detect_hoge< J >::value << " ";
   std::cout << detect_hoge< K >::value << " ";
   std::cout << detect_hoge< L >::value << " ";
@@ -61,10 +68,17 @@ int main() {
   std::cout << detect_hoge< C, int >::value << " ";
   std::cout << detect_hoge< D, int >::value << " ";
   std::cout << detect_hoge< E, int >::value << " ";
+#if __GNUC__ == 4 && __GNUC_MINOR__ == 7
+  std::cout << 'b' << " ";
+  std::cout << 'b' << " ";
+  std::cout << 'b' << " ";
+  std::cout << 'b' << " ";
+#else
   std::cout << detect_hoge< F, int >::value << " ";
   std::cout << detect_hoge< G, int >::value << " ";
   std::cout << detect_hoge< H, int >::value << " ";
   std::cout << detect_hoge< I, int >::value << " ";
+#endif
   std::cout << detect_hoge< J, int >::value << " ";
   std::cout << detect_hoge< K, int >::value << " ";
   std::cout << detect_hoge< L, int >::value << " ";
@@ -77,19 +91,43 @@ int main() {
   std::cout << detect_hoge< int, int >::value << std::endl;
   std::cout << "detect_hoge< T, void( float*, float* ) >" << std::endl;
   std::cout << detect_hoge< A, void( float*, float* ) >::value << " ";
+#if __GNUC__ && !__clang__
+  std::cout << 'b' << " ";
+#else
   std::cout << detect_hoge< B, void( float*, float* ) >::value << " ";
+#endif
   std::cout << detect_hoge< C, void( float*, float* ) >::value << " ";
   std::cout << detect_hoge< D, void( float*, float* ) >::value << " ";
   std::cout << detect_hoge< E, void( float*, float* ) >::value << " ";
+#if __GNUC__ && !__clang__
+  std::cout << 'b' << " ";
+  std::cout << 'b' << " ";
+  std::cout << 'b' << " ";
+  std::cout << 'b' << " ";
+#else
+#if __GNUC__ == 4 && __GNUC_MINOR__ == 7
+  std::cout << 'b' << " ";
+  std::cout << 'b' << " ";
+#else
   std::cout << detect_hoge< F, void( float*, float* ) >::value << " ";
   std::cout << detect_hoge< G, void( float*, float* ) >::value << " ";
+#endif
   std::cout << detect_hoge< H, void( float*, float* ) >::value << " ";
   std::cout << detect_hoge< I, void( float*, float* ) >::value << " ";
+#endif
+#if __GNUC__ && !__clang__
+  std::cout << 'b' << " ";
+#else
   std::cout << detect_hoge< J, void( float*, float* ) >::value << " ";
+#endif
   std::cout << detect_hoge< K, void( float*, float* ) >::value << " ";
   std::cout << detect_hoge< L, void( float*, float* ) >::value << " ";
   std::cout << detect_hoge< M, void( float*, float* ) >::value << " ";
+#if __GNUC__ && !__clang__
+  std::cout << 'b' << " ";
+#else
   std::cout << detect_hoge< N, void( float*, float* ) >::value << " ";
+#endif
   std::cout << detect_hoge< O, void( float*, float* ) >::value << " ";
   std::cout << detect_hoge< P, void( float*, float* ) >::value << " ";
   std::cout << detect_hoge< Q, void( float*, float* ) >::value << " ";

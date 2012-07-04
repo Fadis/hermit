@@ -41,7 +41,7 @@
         }; \
       } \
       template< typename Func, typename T > \
-      detail:: metafunc_name < T, Func > metafunc_name BOOST_PP_LPAREN() T* t, typename boost::disable_if< typename boost::is_pod< T >::type >::type* = 0 ); \
+      detail:: metafunc_name < T, Func > metafunc_name BOOST_PP_LPAREN() T* t, typename boost::enable_if< typename boost::is_class< T >::type >::type* = 0 ); \
       template< typename Func > \
       boost::mpl::bool_< false > metafunc_name BOOST_PP_LPAREN() ... ); \
     } \
