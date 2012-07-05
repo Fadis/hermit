@@ -41,7 +41,7 @@ int main() {
   std::cout << detect_hoge< C >::value << " ";
   std::cout << detect_hoge< D >::value << " ";
   std::cout << detect_hoge< E >::value << " ";
-#if __GNUC__ == 4 && __GNUC_MINOR__ == 7
+#if __GNUC__ == 4 && __GNUC_MINOR__ >= 7
   std::cout << 'b' << " ";
   std::cout << 'b' << " ";
   std::cout << 'b' << " ";
@@ -68,7 +68,7 @@ int main() {
   std::cout << detect_hoge< C, int >::value << " ";
   std::cout << detect_hoge< D, int >::value << " ";
   std::cout << detect_hoge< E, int >::value << " ";
-#if __GNUC__ == 4 && __GNUC_MINOR__ == 7
+#if __GNUC__ == 4 && __GNUC_MINOR__ >= 7
   std::cout << 'b' << " ";
   std::cout << 'b' << " ";
   std::cout << 'b' << " ";
@@ -105,7 +105,7 @@ int main() {
   std::cout << 'b' << " ";
   std::cout << 'b' << " ";
 #else
-#if __GNUC__ == 4 && __GNUC_MINOR__ == 7
+#if __GNUC__ == 4 && __GNUC_MINOR__ >= 7
   std::cout << 'b' << " ";
   std::cout << 'b' << " ";
 #else

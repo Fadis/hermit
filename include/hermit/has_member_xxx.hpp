@@ -41,17 +41,23 @@ namespace hermit {
   template< \
     typename T, \
     typename ExpectedType = ::hermit::none_type, \
-    typename is_function = typename boost::is_function< ExpectedType >::type > \
+    typename is_function = typename boost::is_function< ExpectedType >::type, \
+    typename is_member = typename boost::is_member_function_pointer< typename boost::add_pointer< ExpectedType >::type >::type\
+  > \
   struct metafunc_name : \
     public detail_variable:: metafunc_name < T, ExpectedType >::type {}; \
   template< typename T, typename ExpectedType > \
-  struct metafunc_name < T, ExpectedType, boost::true_type > : \
+  struct metafunc_name < T, ExpectedType, boost::true_type, boost::true_type > : \
     public boost::mpl::bool_< \
-      detail_function:: metafunc_name < T, ExpectedType >::value || \
+      detail_function:: metafunc_name < T, ExpectedType >::value \
+    > {}; \
+  template< typename T, typename ExpectedType > \
+  struct metafunc_name < T, ExpectedType, boost::true_type, boost::false_type > : \
+    public boost::mpl::bool_< \
       detail_static_function:: metafunc_name < T, ExpectedType >::value \
     > {}; \
-  template< typename T > \
-  struct metafunc_name < T, ::hermit::none_type, boost::false_type > : \
+  template< typename T, typename U > \
+  struct metafunc_name < T, ::hermit::none_type, boost::false_type, U > : \
     public detail_type:: metafunc_name < T > {};
 
 #endif
