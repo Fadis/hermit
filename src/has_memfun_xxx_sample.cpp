@@ -11,9 +11,16 @@
 #include <boost/mpl/bool.hpp>
 #include <boost/mpl/vector.hpp>
 #include <cxxabi.h>
-#include <hermit/has_member_xxx.hpp>
+#include <hermit/has_member_accessible_xxx.hpp>
+#include <hermit/has_member_type_xxx.hpp>
+#include <hermit/has_member_variable_xxx.hpp>
+#include <hermit/has_member_function_xxx.hpp>
 
-HPP_HAS_MEMBER_XXX( detect_hoge, hoge )
+
+HPP_HAS_MEMBER_ACCESSIBLE_XXX( neo_detect_hoge, hoge )
+HPP_HAS_MEMBER_TYPE_XXX( detect_type_hoge, hoge )
+HPP_HAS_MEMBER_VARIABLE_XXX( detect_value_hoge, hoge )
+HPP_HAS_MEMBER_FUNCTION_XXX( detect_function_hoge, hoge )
 
 struct A {};
 struct B { void hoge( float*, float* ); };
@@ -33,106 +40,115 @@ struct O : public C {};
 struct P : public D {};
 struct Q : public E {};
 struct R { static void hoge( float*, float* ); };
- 
-int main() {
-  std::cout << "detect_hoge< T >" << std::endl;
-  std::cout << detect_hoge< A >::value << " ";
-  std::cout << detect_hoge< B >::value << " ";
-  std::cout << detect_hoge< C >::value << " ";
-  std::cout << detect_hoge< D >::value << " ";
-  std::cout << detect_hoge< E >::value << " ";
-#if __GNUC__ == 4 && __GNUC_MINOR__ >= 7
-  std::cout << 'b' << " ";
-  std::cout << 'b' << " ";
-  std::cout << 'b' << " ";
-  std::cout << 'b' << " ";
-#else
-  std::cout << detect_hoge< F >::value << " ";
-  std::cout << detect_hoge< G >::value << " ";
-  std::cout << detect_hoge< H >::value << " ";
-  std::cout << detect_hoge< I >::value << " ";
-#endif
-  std::cout << detect_hoge< J >::value << " ";
-  std::cout << detect_hoge< K >::value << " ";
-  std::cout << detect_hoge< L >::value << " ";
-  std::cout << detect_hoge< M >::value << " ";
-  std::cout << detect_hoge< N >::value << " ";
-  std::cout << detect_hoge< O >::value << " ";
-  std::cout << detect_hoge< P >::value << " ";
-  std::cout << detect_hoge< Q >::value << " ";
-  std::cout << detect_hoge< R >::value << " ";
-  std::cout << detect_hoge< int >::value << std::endl;
-  std::cout << "detect_hoge< T, int >" << std::endl;
-  std::cout << detect_hoge< A, int >::value << " ";
-  std::cout << detect_hoge< B, int >::value << " ";
-  std::cout << detect_hoge< C, int >::value << " ";
-  std::cout << detect_hoge< D, int >::value << " ";
-  std::cout << detect_hoge< E, int >::value << " ";
-#if __GNUC__ == 4 && __GNUC_MINOR__ >= 7
-  std::cout << 'b' << " ";
-  std::cout << 'b' << " ";
-  std::cout << 'b' << " ";
-  std::cout << 'b' << " ";
-#else
-  std::cout << detect_hoge< F, int >::value << " ";
-  std::cout << detect_hoge< G, int >::value << " ";
-  std::cout << detect_hoge< H, int >::value << " ";
-  std::cout << detect_hoge< I, int >::value << " ";
-#endif
-  std::cout << detect_hoge< J, int >::value << " ";
-  std::cout << detect_hoge< K, int >::value << " ";
-  std::cout << detect_hoge< L, int >::value << " ";
-  std::cout << detect_hoge< M, int >::value << " ";
-  std::cout << detect_hoge< N, int >::value << " ";
-  std::cout << detect_hoge< O, int >::value << " ";
-  std::cout << detect_hoge< P, int >::value << " ";
-  std::cout << detect_hoge< Q, int >::value << " ";
-  std::cout << detect_hoge< R, int >::value << " ";
-  std::cout << detect_hoge< int, int >::value << std::endl;
-  std::cout << "detect_hoge< T, void( float*, float* ) >" << std::endl;
-  std::cout << detect_hoge< A, void( float*, float* ) >::value << " ";
-#if __GNUC__ && !__clang__
-  std::cout << 'b' << " ";
-#else
-  std::cout << detect_hoge< B, void( float*, float* ) >::value << " ";
-#endif
-  std::cout << detect_hoge< C, void( float*, float* ) >::value << " ";
-  std::cout << detect_hoge< D, void( float*, float* ) >::value << " ";
-  std::cout << detect_hoge< E, void( float*, float* ) >::value << " ";
-#if __GNUC__ && !__clang__
-  std::cout << 'b' << " ";
-  std::cout << 'b' << " ";
-  std::cout << 'b' << " ";
-  std::cout << 'b' << " ";
-#else
-#if __GNUC__ == 4 && __GNUC_MINOR__ >= 7
-  std::cout << 'b' << " ";
-  std::cout << 'b' << " ";
-#else
-  std::cout << detect_hoge< F, void( float*, float* ) >::value << " ";
-  std::cout << detect_hoge< G, void( float*, float* ) >::value << " ";
-#endif
-  std::cout << detect_hoge< H, void( float*, float* ) >::value << " ";
-  std::cout << detect_hoge< I, void( float*, float* ) >::value << " ";
-#endif
-#if __GNUC__ && !__clang__
-  std::cout << 'b' << " ";
-#else
-  std::cout << detect_hoge< J, void( float*, float* ) >::value << " ";
-#endif
-  std::cout << detect_hoge< K, void( float*, float* ) >::value << " ";
-  std::cout << detect_hoge< L, void( float*, float* ) >::value << " ";
-  std::cout << detect_hoge< M, void( float*, float* ) >::value << " ";
-#if __GNUC__ && !__clang__
-  std::cout << 'b' << " ";
-#else
-  std::cout << detect_hoge< N, void( float*, float* ) >::value << " ";
-#endif
-  std::cout << detect_hoge< O, void( float*, float* ) >::value << " ";
-  std::cout << detect_hoge< P, void( float*, float* ) >::value << " ";
-  std::cout << detect_hoge< Q, void( float*, float* ) >::value << " ";
-  std::cout << detect_hoge< R, void( float*, float* ) >::value << " ";
-  std::cout << detect_hoge< int, void( float*, float* ) >::value << std::endl;
 
+int main() {
+  std::cout << neo_detect_hoge< A >::value << " ";
+  std::cout << neo_detect_hoge< B >::value << " ";
+  std::cout << neo_detect_hoge< C >::value << " ";
+  std::cout << neo_detect_hoge< D >::value << " ";
+  std::cout << neo_detect_hoge< E >::value << " ";
+#if __GNUC__ && !__clang__
+  std::cout << "x ";
+  std::cout << "x ";
+  std::cout << "x ";
+  std::cout << "x ";
+#else
+  std::cout << neo_detect_hoge< F >::value << " ";
+  std::cout << neo_detect_hoge< G >::value << " ";
+  std::cout << neo_detect_hoge< H >::value << " ";
+  std::cout << neo_detect_hoge< I >::value << " ";
+#endif
+  std::cout << neo_detect_hoge< J >::value << " ";
+  std::cout << neo_detect_hoge< K >::value << " ";
+  std::cout << neo_detect_hoge< L >::value << " ";
+  std::cout << neo_detect_hoge< M >::value << " ";
+  std::cout << neo_detect_hoge< N >::value << " ";
+  std::cout << neo_detect_hoge< O >::value << " ";
+  std::cout << neo_detect_hoge< P >::value << " ";
+  std::cout << neo_detect_hoge< Q >::value << " ";
+  std::cout << neo_detect_hoge< R >::value << " ";
+  std::cout << neo_detect_hoge< int >::value << std::endl;
+
+  std::cout << detect_type_hoge< A >::value << " ";
+  std::cout << detect_type_hoge< B >::value << " ";
+  std::cout << detect_type_hoge< C >::value << " ";
+  std::cout << detect_type_hoge< D >::value << " ";
+  std::cout << detect_type_hoge< E >::value << " ";
+#if __GNUC__ && !__clang__
+  std::cout << "x ";
+  std::cout << "x ";
+  std::cout << "x ";
+  std::cout << "x ";
+#else
+  std::cout << detect_type_hoge< F >::value << " ";
+  std::cout << detect_type_hoge< G >::value << " ";
+  std::cout << detect_type_hoge< H >::value << " ";
+  std::cout << detect_type_hoge< I >::value << " ";
+#endif
+  std::cout << detect_type_hoge< J >::value << " ";
+  std::cout << detect_type_hoge< K >::value << " ";
+  std::cout << detect_type_hoge< L >::value << " ";
+  std::cout << detect_type_hoge< M >::value << " ";
+  std::cout << detect_type_hoge< N >::value << " ";
+  std::cout << detect_type_hoge< O >::value << " ";
+  std::cout << detect_type_hoge< P >::value << " ";
+  std::cout << detect_type_hoge< Q >::value << " ";
+  std::cout << detect_type_hoge< R >::value << " ";
+  std::cout << detect_type_hoge< int >::value << std::endl;
+
+  std::cout << detect_value_hoge< A, int >::value << " ";
+  std::cout << detect_value_hoge< B, int >::value << " ";
+  std::cout << detect_value_hoge< C, int >::value << " ";
+  std::cout << detect_value_hoge< D, int >::value << " ";
+  std::cout << detect_value_hoge< E, int >::value << " ";
+#if __GNUC__ && !__clang__
+  std::cout << "x ";
+  std::cout << "x ";
+  std::cout << "x ";
+  std::cout << "x ";
+#else
+  std::cout << detect_value_hoge< F, int >::value << " ";
+  std::cout << detect_value_hoge< G, int >::value << " ";
+  std::cout << detect_value_hoge< H, int >::value << " ";
+  std::cout << detect_value_hoge< I, int >::value << " ";
+#endif
+  std::cout << detect_value_hoge< J, int >::value << " ";
+  std::cout << detect_value_hoge< K, int >::value << " ";
+  std::cout << detect_value_hoge< L, int >::value << " ";
+  std::cout << detect_value_hoge< M, int >::value << " ";
+  std::cout << detect_value_hoge< N, int >::value << " ";
+  std::cout << detect_value_hoge< O, int >::value << " ";
+  std::cout << detect_value_hoge< P, int >::value << " ";
+  std::cout << detect_value_hoge< Q, int >::value << " ";
+  std::cout << detect_value_hoge< R, int >::value << " ";
+  std::cout << detect_value_hoge< int, int >::value << std::endl;
+
+
+  std::cout << detect_function_hoge< A, void( float*, float* ) >::value << " ";
+  std::cout << detect_function_hoge< B, void( float*, float* ) >::value << " ";
+  std::cout << detect_function_hoge< C, void( float*, float* ) >::value << " ";
+  std::cout << detect_function_hoge< D, void( float*, float* ) >::value << " ";
+  std::cout << detect_function_hoge< E, void( float*, float* ) >::value << " ";
+#if __GNUC__ && !__clang__
+  std::cout << "x ";
+  std::cout << "x ";
+  std::cout << "x ";
+  std::cout << "x ";
+#else
+  std::cout << detect_function_hoge< F, void( float*, float* ) >::value << " ";
+  std::cout << detect_function_hoge< G, void( float*, float* ) >::value << " ";
+  std::cout << detect_function_hoge< H, void( float*, float* ) >::value << " ";
+  std::cout << detect_function_hoge< I, void( float*, float* ) >::value << " ";
+#endif
+  std::cout << detect_function_hoge< J, void( float*, float* ) >::value << " ";
+  std::cout << detect_function_hoge< K, void( float*, float* ) >::value << " ";
+  std::cout << detect_function_hoge< L, void( float*, float* ) >::value << " ";
+  std::cout << detect_function_hoge< M, void( float*, float* ) >::value << " ";
+  std::cout << detect_function_hoge< N, void( float*, float* ) >::value << " ";
+  std::cout << detect_function_hoge< O, void( float*, float* ) >::value << " ";
+  std::cout << detect_function_hoge< P, void( float*, float* ) >::value << " ";
+  std::cout << detect_function_hoge< Q, void( float*, float* ) >::value << " ";
+  std::cout << detect_function_hoge< R, void( float*, float* ) >::value << " ";
+  std::cout << detect_function_hoge< int, void( float*, float* ) >::value << std::endl;
 }
 

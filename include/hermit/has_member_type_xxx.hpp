@@ -1,21 +1,41 @@
 #ifndef HERMIT_HAS_MEMBER_TYPE_XXX_HPP
 #define HERMIT_HAS_MEMBER_TYPE_XXX_HPP
 
-#include <boost/mpl/bool.hpp>
-#include <boost/preprocessor/cat.hpp>
-#include <boost/preprocessor/punctuation/paren.hpp>
+#include <boost/config.hpp>
 
-#define HPP_HAS_MEMBER_TYPE_XXX( metafunc_name, name ) \
+#ifdef BOOST_NO_DECLTYPE
+#else
+#include <utility>
+
+#ifdef BOOST_NO_0X_HDR_TYPE_TRAITS
+#include <boost/type_traits.hpp>
+#else
+#include <type_traits>
+#endif
+
+#define HPP_HAS_MEMBER_TYPE_XXX_INTERNAL( metafunc_name, target_name, library ) \
   namespace detail { \
-    boost::mpl::bool_< false > metafunc_name BOOST_PP_LPAREN() ... BOOST_PP_RPAREN(); \
-    template< typename T > \
-    boost::mpl::bool_< true > metafunc_name BOOST_PP_LPAREN() T, typename T:: name * = 0 BOOST_PP_RPAREN(); \
+    template< \
+      typename T \
+    > \
+    library :: true_type metafunc_name ( T&&, typename T :: target_name * = 0 ); \
+    library :: false_type metafunc_name ( ... ); \
   } \
-template< typename T > \
-struct metafunc_name { \
-  typedef decltype BOOST_PP_LPAREN() detail:: metafunc_name BOOST_PP_LPAREN() T BOOST_PP_LPAREN() BOOST_PP_RPAREN()  BOOST_PP_RPAREN() BOOST_PP_RPAREN() type; \
-  static const bool value = type::value; \
-};
+  template< \
+    typename T, \
+    typename Result = decltype ( detail:: metafunc_name ( std::declval< T >() ) ) \
+  > \
+  struct metafunc_name : public Result {};
+
+#ifdef BOOST_NO_0X_HDR_TYPE_TRAITS
+#define HPP_HAS_MEMBER_TYPE_XXX( metafunc_name, target_name ) \
+  HPP_HAS_MEMBER_TYPE_XXX_INTERNAL( metafunc_name, target_name, boost )
+#else
+#define HPP_HAS_MEMBER_TYPE_XXX( metafunc_name, target_name ) \
+  HPP_HAS_MEMBER_TYPE_XXX_INTERNAL( metafunc_name, target_name, std )
+#endif
+
+#endif
 
 #endif
 
