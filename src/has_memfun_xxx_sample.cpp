@@ -15,12 +15,14 @@
 #include <hermit/has_member_type_xxx.hpp>
 #include <hermit/has_member_variable_xxx.hpp>
 #include <hermit/has_member_function_xxx.hpp>
+#include <hermit/has_function_xxx.hpp>
 
 
 HPP_HAS_MEMBER_ACCESSIBLE_XXX( neo_detect_hoge, hoge )
 HPP_HAS_MEMBER_TYPE_XXX( detect_type_hoge, hoge )
 HPP_HAS_MEMBER_VARIABLE_XXX( detect_value_hoge, hoge )
 HPP_HAS_MEMBER_FUNCTION_XXX( detect_function_hoge, hoge )
+HPP_HAS_FUNCTION_XXX( detect_adl_function_hoge, hoge )
 
 struct A {};
 struct B { void hoge( float*, float* ); };
@@ -40,6 +42,11 @@ struct O : public C {};
 struct P : public D {};
 struct Q : public E {};
 struct R { static void hoge( float*, float* ); };
+
+namespace foo {
+  struct bar{};
+  void hoge( bar );
+}
 
 int main() {
   std::cout << neo_detect_hoge< A >::value << " ";
@@ -150,5 +157,7 @@ int main() {
   std::cout << detect_function_hoge< Q, void( float*, float* ) >::value << " ";
   std::cout << detect_function_hoge< R, void( float*, float* ) >::value << " ";
   std::cout << detect_function_hoge< int, void( float*, float* ) >::value << std::endl;
+
+  std::cout << detect_adl_function_hoge< void( foo::bar ) >::value << std::endl;
 }
 

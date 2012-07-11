@@ -13,13 +13,14 @@
 #include <type_traits.hpp>
 #endif
 
+#include <hermit/none_type.hpp>
+
 namespace hermit {
   template< typename T >
   struct member_pointer_to_value_type {
-    struct none_type {};
     template< typename U, typename V >
     static V hoge( V U ::* );
-    static none_type hoge( ... );
+    static hermit::none_type hoge( ... );
     typedef decltype( hoge( std::declval< T >() ) ) type;
   };
 }
