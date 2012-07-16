@@ -10,7 +10,7 @@
 #ifdef BOOST_NO_0X_HDR_TYPE_TRAITS
 #include <boost/type_traits.hpp>
 #else
-#include <type_traits.hpp>
+#include <type_traits>
 #endif
 
 #define HPP_HAS_MEMBER_ACCESSIBLE_XXX_INTERNAL( metafunc_name, target_name, library ) \

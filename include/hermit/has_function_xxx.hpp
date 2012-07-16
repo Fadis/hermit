@@ -41,16 +41,17 @@
   };
 #define HPP_HAS_FUNCTION_XXX_INTERNAL( metafunc_name, target_name, judge, library ) \
   namespace detail { \
+    hermit::none_type target_name (...); \
     template< typename T > \
     struct metafunc_name : public std::false_type {}; \
     BOOST_PP_REPEAT_FROM_TO( 1, HPP_HAS_FUNCTION_XXX_MAX_ARGUMENTS_COUNT, HPP_HAS_FUNCTION_XXX_DETECTOR, ( metafunc_name, target_name, judge, library ) ) \
-    hermit::none_type target_name (...); \
   } \
   template < typename T > \
   struct metafunc_name : detail:: metafunc_name < T > {};
 #else
 #define HPP_HAS_FUNCTION_XXX_INTERNAL( metafunc_name, target_name, judge, library ) \
   namespace detail { \
+    hermit::none_type target_name (...); \
     template< typename T > \
     struct metafunc_name : public std::false_type {}; \
     template< typename ReturnType, typename ...Args > \
@@ -63,7 +64,6 @@
       >::type type; \
       static constexpr bool value = type::value; \
     }; \
-    hermit::none_type target_name (...); \
   } \
   template < typename T > \
   struct metafunc_name : detail:: metafunc_name < T > {};

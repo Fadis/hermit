@@ -10,7 +10,7 @@
 #ifdef BOOST_NO_0X_HDR_TYPE_TRAITS
 #include <boost/type_traits.hpp>
 #else
-#include <type_traits.hpp>
+#include <type_traits>
 #endif
 
 #include <hermit/none_type.hpp>

@@ -23,6 +23,11 @@ HPP_HAS_MEMBER_TYPE_XXX( detect_type_hoge, hoge )
 HPP_HAS_MEMBER_VARIABLE_XXX( detect_value_hoge, hoge )
 HPP_HAS_MEMBER_FUNCTION_XXX( detect_function_hoge, hoge )
 HPP_HAS_FUNCTION_XXX( detect_adl_function_hoge, hoge )
+HPP_HAS_FUNCTION_XXX( detect_adl_function_fuga, fuga )
+
+HPP_HAS_MEMBER_FUNCTION_XXX( detect_function_begin, begin )
+  template< typename T >
+  struct something : public detect_function_begin< T, typename T::const_iterator() const >::type {};
 
 struct A {};
 struct B { void hoge( float*, float* ); };
@@ -159,5 +164,10 @@ int main() {
   std::cout << detect_function_hoge< int, void( float*, float* ) >::value << std::endl;
 
   std::cout << detect_adl_function_hoge< void( foo::bar ) >::value << std::endl;
+  std::cout << detect_adl_function_fuga< void( foo::bar ) >::value << std::endl;
+
+  std::cout << something< std::vector< int > >::value << std::endl;
+  int status;
+//  std::cout << abi::__cxa_demangle( typeid( decltype( std::declval< boost::add_const< std::vector< int > >::type >() . begin() ) ).name(), 0, 0, &status ) << std::endl;
 }
 
