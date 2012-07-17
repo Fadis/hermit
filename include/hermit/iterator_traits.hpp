@@ -4,7 +4,7 @@
 #include <boost/mpl/has_xxx.hpp>
 #include <boost/iterator/iterator_traits.hpp>
 #include <boost/iterator/iterator_categories.hpp>
-
+#include <boost/iterator/iterator_archetypes.hpp>
 #include <hermit/none_type.hpp>
 
 namespace hermit {
@@ -31,36 +31,26 @@ HPP_ITERATOR_TRAITS_WRAPPER( iterator_category, boost::iterator_category )
 HPP_ITERATOR_TRAITS_WRAPPER( iterator_traversal, boost::iterator_traversal )
 #undef HPP_ITERATOR_TRAITS_WRAPPER
 
-  template< typename T >
-  struct is_incrementable_traversal_iterator :
-    public boost::is_convertible<
-      typename iterator_traversal< T >::type,
-      boost::incrementable_traversal_tag
+#define HPP_ITERATOR_TRAVERSAL_WRAPPER( metafunc_name, target_name ) \
+  template< \
+    typename T, \
+    bool has_category = has_iterator_category< boost::detail::iterator_traits< T > >::value \
+  > \
+  struct metafunc_name : \
+    public std::false_type {}; \
+  template< typename T > \
+  struct metafunc_name < T, true > : \
+    public boost::is_convertible< \
+      typename iterator_traversal< T >::type, \
+      target_name \
     >::type {};
-  template< typename T >
-  struct is_single_pass_traversal_iterator :
-    public boost::is_convertible<
-      typename iterator_traversal< T >::type,
-      boost::single_pass_traversal_tag
-    >::type {};
-  template< typename T >
-  struct is_forward_traversal_iterator :
-    public boost::is_convertible<
-      typename iterator_traversal< T >::type,
-      boost::forward_traversal_tag
-    >::type {};
-  template< typename T >
-  struct is_bidirectional_traversal_iterator :
-    public boost::is_convertible<
-      typename iterator_traversal< T >::type,
-      boost::bidirectional_traversal_tag
-    >::type {};
-  template< typename T >
-  struct is_random_access_traversal_iterator :
-    public boost::is_convertible<
-      typename iterator_traversal< T >::type,
-      boost::random_access_traversal_tag
-    >::type {};
+HPP_ITERATOR_TRAVERSAL_WRAPPER( is_incrementable_traversal_iterator, boost::incrementable_traversal_tag )
+HPP_ITERATOR_TRAVERSAL_WRAPPER( is_single_pass_traversal_iterator, boost::single_pass_traversal_tag )
+HPP_ITERATOR_TRAVERSAL_WRAPPER( is_forward_traversal_iterator, boost::forward_traversal_tag )
+HPP_ITERATOR_TRAVERSAL_WRAPPER( is_bidirectional_traversal_iterator, boost::bidirectional_traversal_tag )
+HPP_ITERATOR_TRAVERSAL_WRAPPER( is_random_access_traversal_iterator, boost::random_access_traversal_tag )
+
+#undef HPP_ITERATOR_TRAVERSAL_WRAPPER
 
 }
 
