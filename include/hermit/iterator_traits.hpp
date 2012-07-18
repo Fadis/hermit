@@ -4,7 +4,8 @@
 #include <boost/mpl/has_xxx.hpp>
 #include <boost/iterator/iterator_traits.hpp>
 #include <boost/iterator/iterator_categories.hpp>
-#include <boost/iterator/iterator_archetypes.hpp>
+#include <boost/iterator/is_readable_iterator.hpp>
+#include <boost/iterator/is_lvalue_iterator.hpp>
 #include <hermit/none_type.hpp>
 
 namespace hermit {
@@ -52,6 +53,64 @@ HPP_ITERATOR_TRAVERSAL_WRAPPER( is_random_access_traversal_iterator, boost::rand
 
 #undef HPP_ITERATOR_TRAVERSAL_WRAPPER
 
+  template<
+    typename T,
+    bool has_category = has_iterator_category< boost::detail::iterator_traits< T > >::value
+  >
+  struct is_readable_iterator :
+    public std::false_type {};
+  template<
+    typename T
+  >
+  struct is_readable_iterator< T, true > :
+    public boost::is_readable_iterator< T >::type {};
+
+  template<
+    typename IteratorType,
+    typename ValueType,
+    bool has_category = has_iterator_category< boost::detail::iterator_traits< IteratorType > >::value
+  >
+  struct is_writable_iterator :
+    public std::false_type {};
+  template<
+    typename IteratorType,
+    typename ValueType
+  >
+  class is_writable_iterator< IteratorType, ValueType, true > {
+  private:
+    template<
+      typename IteratorType_,
+      typename ReturnType = decltype( *std::declval< IteratorType_ >() = std::declval< ValueType >() )
+    >
+    static std::true_type check( IteratorType_&& );
+    static std::false_type check( ... );
+  public:
+    typedef decltype( check( std::declval< IteratorType >() ) ) type;
+    static constexpr bool value = type::value;
+  };
+
+  template<
+    typename T,
+    bool is_writable_iterator_ = is_writable_iterator< T, typename iterator_value< T >::type >::value
+  >
+  struct is_swappable_iterator : public std::false_type {};
+  template<
+    typename T
+  >
+  struct is_swappable_iterator< T, true > :
+    public is_readable_iterator< T >::type {};
+
+  template<
+    typename T,
+    bool has_category = has_iterator_category< boost::detail::iterator_traits< T > >::value
+  >
+  struct is_lvalue_iterator :
+    public std::false_type {};
+  template<
+    typename T
+  >
+  struct is_lvalue_iterator< T, true > :
+    public boost::is_lvalue_iterator< T >::type {};
 }
 
 #endif
