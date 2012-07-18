@@ -113,6 +113,54 @@ HPP_RANGE_TRAITS_WRAPPER( is_random_access_traversal_range, is_random_access_tra
 
 #undef HPP_RANGE_TRAITS_WRAPPER
 
+#define HPP_RANGE_TRAITS_WRAPPER( metafunc_name ) \
+  template< \
+    typename T, \
+    bool is_range_ = is_range< T >::value \
+  > \
+  struct metafunc_name { \
+    typedef none_type type; \
+  }; \
+  template< \
+    typename T \
+  > \
+  struct metafunc_name < T, true > : \
+    public boost :: metafunc_name < T > {};
+
+HPP_RANGE_TRAITS_WRAPPER( range_iterator )
+HPP_RANGE_TRAITS_WRAPPER( range_value )
+HPP_RANGE_TRAITS_WRAPPER( range_reference )
+HPP_RANGE_TRAITS_WRAPPER( range_pointer )
+HPP_RANGE_TRAITS_WRAPPER( range_category )
+
+#undef HPP_RANGE_TRAITS_WRAPPER
+
+  template<
+    typename T,
+    bool is_range_ = is_forward_traversal_range< T >::value
+  >
+  struct range_difference { 
+    typedef none_type type;
+  };
+  template<
+    typename T
+  >
+  struct range_difference < T, true > :
+    public boost :: range_difference < T > {};
+
+  template<
+    typename T,
+    bool is_range_ = is_bidirectional_traversal_range< T >::value
+  >
+  struct range_reverse_iterator { 
+    typedef none_type type;
+  };
+  template<
+    typename T
+  >
+  struct range_reverse_iterator < T, true > :
+    public boost :: range_reverse_iterator < T > {};
+
   template<
     typename T,
     bool is_range_ = is_range< T >::value
