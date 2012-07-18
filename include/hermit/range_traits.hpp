@@ -71,6 +71,15 @@ namespace hermit {
         has_function_range_end< typename boost::range_mutable_iterator< T >::type ( T& ) >,
         has_function_range_end< typename boost::range_const_iterator< T >::type ( const T& ) >
       >::type {};
+
+    template< typename T >
+    struct is_range_capable_iterator :
+      public boost::mpl::or_<
+        is_single_pass_traversal_iterator< T >,
+        is_forward_traversal_iterator< T >,
+        is_bidirectional_traversal_iterator< T >,
+        is_random_access_traversal_iterator< T >
+      >::type {};
   }
   template< typename T >
   struct is_range :
@@ -78,6 +87,9 @@ namespace hermit {
       detail::is_range_method1< T >,
       detail::is_range_method2< T >
     >::type {};
+  template< typename Iterator >
+  struct is_range< std::pair< Iterator, Iterator > > :
+    public detail::is_range_capable_iterator< Iterator >::type {};
 
 #define HPP_RANGE_TRAITS_WRAPPER( metafunc_name, target_name ) \
   template< \

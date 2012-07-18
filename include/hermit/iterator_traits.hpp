@@ -52,6 +52,16 @@ HPP_ITERATOR_TRAVERSAL_WRAPPER( is_bidirectional_traversal_iterator, boost::bidi
 HPP_ITERATOR_TRAVERSAL_WRAPPER( is_random_access_traversal_iterator, boost::random_access_traversal_tag )
 
 #undef HPP_ITERATOR_TRAVERSAL_WRAPPER
+  
+  template< typename T >
+  struct is_iterator :
+    public boost::mpl::or_<
+      is_incrementable_traversal_iterator< T >,
+      is_single_pass_traversal_iterator< T >,
+      is_forward_traversal_iterator< T >,
+      is_bidirectional_traversal_iterator< T >,
+      is_random_access_traversal_iterator< T >
+    >::type {};
 
   template<
     typename T,
