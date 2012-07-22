@@ -32,10 +32,9 @@ if (NOT TomMath_FOUND)
   message(SEND_ERROR "TomMath not found. Huge integer will not work." )
 endif (NOT TomMath_FOUND)
 
-CHECK_CXX_SOURCE_COMPILES("int main(){ __int128_t a; __uint128_t b; }" HAVE_INT128_T )
-if (NOT HAVE_INT128_T)
-  message( "128bit integer is not available. 128bit integer support was disabled." )
-endif(NOT HAVE_INT128_T)
+pkg_check_modules(GLFW3 REQUIRED glfw)
+
+
 INCLUDE_DIRECTORIES( ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_BINARY_DIR}/include ${Boost_INCLUDE_DIRS} )
 link_directories( ${Boost_LIBRARY_DIRS} )
 subdirs( include src )
