@@ -38,18 +38,9 @@ namespace hermit {
 #endif
         mutex;
         typedef std::shared_ptr< promise > promise_ptr;
-        delayed() : value( promise_ptr( new promise ) ) {
+        delayed() : value( promise_ptr( new promise ) ), guard( new mutex ) {
           dereference = std::bind( &delayed<T>::initial_access, this );
         }
-#ifdef BOOST_NO_DELETED_FUNCTIONS
-     private:
-        delayed( const delayed< T >& );
-        delayed< T > &operator=( const delayed< T >& );
-     public:
-#else
-        delayed( const delayed< T >& ) = delete;
-        delayed< T > &operator=( const delayed< T >& ) = delete;
-#endif
         T &operator*() {
           return dereference();
         }
@@ -61,18 +52,18 @@ namespace hermit {
         }
         promise_ptr get_promise() {
 #ifdef BOOST_NO_0X_HDR_MUTEX
-          boost::mutex::scoped_lock lock( guard );
+          boost::mutex::scoped_lock lock( *guard );
 #else
-          std::lock_guard< std::mutex > lock( guard );
+          std::lock_guard< std::mutex > lock( *guard );
 #endif
           return boost::get< promise_ptr >( value );
         }
       private:
         T &initial_access() {
 #ifdef BOOST_NO_0X_HDR_MUTEX
-          boost::mutex::scoped_lock lock( guard );
+          boost::mutex::scoped_lock lock( *guard );
 #else
-          std::lock_guard< std::mutex > lock( guard );
+          std::lock_guard< std::mutex > lock( *guard );
 #endif
           if( value.which() == 0 ) {
             value = boost::get< promise_ptr >( value )->get_future().get();
@@ -85,7 +76,7 @@ namespace hermit {
         }
         mutable std::function< T&() > dereference;
         boost::variant< promise_ptr, T > value;
-        mutex guard;
+        boost::shared_ptr< mutex > guard;
     };
 }
 
