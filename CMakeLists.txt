@@ -32,7 +32,7 @@ if (NOT TomMath_FOUND)
   message(SEND_ERROR "TomMath not found. Huge integer will not work." )
 endif (NOT TomMath_FOUND)
 
-pkg_check_modules(GLFW3 REQUIRED glfw)
+pkg_check_modules(GLFW3 REQUIRED libglfw>=3.0)
 
 
 INCLUDE_DIRECTORIES( ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_BINARY_DIR}/include ${Boost_INCLUDE_DIRS} )

@@ -1,4 +1,4 @@
-# - Try to find Assimp
+# - Try to find TomMath
 # Once done, this will define
 #
 #  TomMath_FOUND - system has TomMath
