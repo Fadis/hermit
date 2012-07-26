@@ -19,8 +19,8 @@ ADD_EXECUTABLE( s_expr_sample s_expr_sample.cpp )
 ADD_EXECUTABLE( json_sample json_sample.cpp )
 ADD_EXECUTABLE( delayed_sample delayed_sample.cpp )
 target_link_libraries( delayed_sample ${Boost_LIBRARIES} )
-ADD_EXECUTABLE( scheduler_sample scheduler_sample.cpp )
-target_link_libraries( scheduler_sample ${Boost_LIBRARIES} )
+ADD_EXECUTABLE( task_remapper_sample task_remapper_sample.cpp )
+target_link_libraries( task_remapper_sample ${Boost_LIBRARIES} )
 
 install( TARGETS hermit_mpint hermit_ip
   RUNTIME DESTINATION bin
