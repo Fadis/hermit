@@ -8,6 +8,7 @@
 #include <boost/asio.hpp>
 #include <boost/tr1/memory.hpp>
 
+
 #ifdef BOOST_NO_0X_HDR_FUTURE
 #include <boost/tr1/functional.hpp>
 #include <boost/thread.hpp>
@@ -26,14 +27,12 @@ namespace hermit {
         work.reset( new boost::asio::io_service::work( task_queue ) );
         for( int count = 0; count != size; ++count ) {
 #ifdef BOOST_NO_0X_HDR_FUTURE
-          pts.push_back( boost::packaged_task< void >( std::bind( &task_remapper::run, this ) ) );
-          end_sync.push_back( pts.back().get_future() );
-          boost::thread thr( boost::ref( pts.back() ) );
+          end_sync.create_thread( std::bind( &task_remapper::run, this ) );
 #else
 # ifdef BOOST_NO_LAMBDAS
-          end_sync.push_back( std::async( std::bind( &task_remapper::run, this ) ) );
+          end_sync.push_back( std::async( std::launch::async, std::bind( &task_remapper::run, this ) ) );
 # else
-          end_sync.push_back( std::async( [&]() { this->run(); } ) );
+          end_sync.push_back( std::async( std::launch::async, [&]() { this->run(); } ) );
 # endif
 #endif
         }
@@ -49,8 +48,12 @@ namespace hermit {
 #endif 
       ~task_remapper() {
         work.reset();
+#ifdef BOOST_NO_0X_HDR_FUTURE
+        end_sync.join_all();
+#else
         for( auto &elem: end_sync )
           elem.get();
+#endif
       }
       template< typename T >
         void post( T func ) {
@@ -64,6 +67,7 @@ namespace hermit {
       static void null_epilogue() {}
       void run() noexcept {
         try {
+          std::cout << "hoge" << std::endl;
           task_queue.run();
           epilogue.run();
         } catch ( std::exception &e ) {
@@ -80,8 +84,7 @@ namespace hermit {
       boost::asio::io_service task_queue;
       boost::asio::io_service epilogue;
 #ifdef BOOST_NO_0X_HDR_FUTURE
-      std::vector< boost::packaged_task< void > > pts;
-      std::vector< boost::unique_future< void > > end_sync;
+      boost::thread_group end_sync;
 #else
       std::vector< std::future< void > > end_sync;
 #endif
