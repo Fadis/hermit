@@ -22,7 +22,7 @@ set(CMAKE_C_FLAGS_RELEASE "-W -Wall -O3")
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
 set(Boost_USE_MULTITHREADED ON)
-find_package(Boost 1.42.0 COMPONENTS thread filesystem system REQUIRED )
+find_package(Boost 1.42.0 COMPONENTS thread filesystem chrono system REQUIRED )
 if (NOT Boost_FOUND)
   message(SEND_ERROR "Boost not found")
 endif (NOT Boost_FOUND)
@@ -32,7 +32,7 @@ if (NOT TomMath_FOUND)
   message(SEND_ERROR "TomMath not found. Huge integer will not work." )
 endif (NOT TomMath_FOUND)
 
-pkg_check_modules(GLFW3 REQUIRED libglfw>=3.0)
+#pkg_check_modules(GLFW3 REQUIRED libglfw>=3.0)
 
 
 INCLUDE_DIRECTORIES( ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_BINARY_DIR}/include ${Boost_INCLUDE_DIRS} )

@@ -6,6 +6,7 @@
 #include <vector>
 #include <exception>
 #include <boost/asio.hpp>
+#include <boost/asio/system_timer.hpp>
 #include <boost/tr1/memory.hpp>
 
 
@@ -21,6 +22,26 @@
 #endif
 
 namespace hermit {
+  class poller {
+    public:
+      template< typename Func >
+      poller( boost::asio::io_service &service, Func func, boost::chrono::milliseconds time ) : timer( new boost::asio::system_timer( service ) ), task( func ), interval( time ) {
+        timer->expires_from_now( interval );
+        timer->async_wait( boost::bind( &poller::timeout, this, boost::asio::placeholders::error ) );
+      }
+      void timeout( const boost::system::error_code &error ) {
+        if( !error ) {
+          task();
+          timer->expires_from_now( interval );
+          timer->async_wait( boost::bind( &poller::timeout, this, boost::asio::placeholders::error ) );
+        }
+      }
+    private:
+    std::shared_ptr< boost::asio::system_timer > timer;
+    std::function< void() > task;
+    boost::chrono::milliseconds interval;
+  };
+
   class task_remapper {
     public:
       task_remapper( size_t size ) {
@@ -58,6 +79,10 @@ namespace hermit {
       template< typename T >
         void post( T func ) {
           task_queue.post( func );
+        }
+      template< typename T, typename Time >
+        poller post( T func, Time time ) {
+          return poller( task_queue, func, time );
         }
       template< typename T >
         void set_epilogue( T func ) {
