@@ -8,7 +8,7 @@
 #include <boost/asio.hpp>
 #include <boost/asio/system_timer.hpp>
 #include <boost/tr1/memory.hpp>
-
+#include <boost/bind.hpp>
 
 #ifdef BOOST_NO_0X_HDR_FUTURE
 #include <boost/tr1/functional.hpp>
@@ -25,7 +25,9 @@ namespace hermit {
   class poller {
     public:
       template< typename Func >
-      poller( boost::asio::io_service &service, Func func, boost::chrono::milliseconds time ) : timer( new boost::asio::system_timer( service ) ), task( func ), interval( time ) {
+      poller( boost::asio::io_service &service, Func func,
+        boost::posix_time::milliseconds time
+      ) : timer( new boost::asio::deadline_timer( service ) ), task( func ), interval( time ) {
         timer->expires_from_now( interval );
         timer->async_wait( boost::bind( &poller::timeout, this, boost::asio::placeholders::error ) );
       }
@@ -37,9 +39,9 @@ namespace hermit {
         }
       }
     private:
-    std::shared_ptr< boost::asio::system_timer > timer;
+    std::shared_ptr< boost::asio::deadline_timer > timer;
     std::function< void() > task;
-    boost::chrono::milliseconds interval;
+    boost::posix_time::milliseconds interval;
   };
 
   class task_remapper {
