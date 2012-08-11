@@ -9,6 +9,7 @@
 #include <boost/asio/system_timer.hpp>
 #include <boost/tr1/memory.hpp>
 #include <boost/bind.hpp>
+#include <boost/shared_ptr.hpp>
 
 #ifdef BOOST_NO_0X_HDR_FUTURE
 #include <boost/tr1/functional.hpp>
@@ -22,26 +23,36 @@
 #endif
 
 namespace hermit {
-  class poller {
+  class poller_core {
     public:
       template< typename Func >
-      poller( boost::asio::io_service &service, Func func,
+      poller_core( boost::asio::io_service &service, Func func,
         boost::posix_time::milliseconds time
-      ) : timer( new boost::asio::deadline_timer( service ) ), task( func ), interval( time ) {
-        timer->expires_from_now( interval );
-        timer->async_wait( boost::bind( &poller::timeout, this, boost::asio::placeholders::error ) );
+      ) : timer( service ), task( func ), interval( time ) {
+        timer.expires_from_now( interval );
+        timer.async_wait( boost::bind( &poller_core::timeout, this, boost::asio::placeholders::error ) );
       }
       void timeout( const boost::system::error_code &error ) {
         if( !error ) {
           task();
-          timer->expires_from_now( interval );
-          timer->async_wait( boost::bind( &poller::timeout, this, boost::asio::placeholders::error ) );
+          timer.expires_from_now( interval );
+          timer.async_wait( boost::bind( &poller_core::timeout, this, boost::asio::placeholders::error ) );
         }
       }
     private:
-    std::shared_ptr< boost::asio::deadline_timer > timer;
+    boost::asio::deadline_timer timer;
     std::function< void() > task;
     boost::posix_time::milliseconds interval;
+  };
+
+  class poller {
+    public:
+      template< typename Func >
+      poller( boost::asio::io_service &service_, Func func,
+        boost::posix_time::milliseconds time
+      ) : core( new poller_core( service_, func, time ) ) {}
+    private:
+    std::shared_ptr< poller_core > core;
   };
 
   class task_remapper {
