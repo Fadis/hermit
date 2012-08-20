@@ -114,6 +114,7 @@ namespace hermit {
         task_queue.post( std::bind( &boost::thread::promise< void >::set_value, signal ) );
 # else
         task_queue.post( std::bind( &std::promise< void >::set_value, signal ) );
+# endif
 #else
         task_queue.post( [=](){ signal->set_value(); } );
 #endif
