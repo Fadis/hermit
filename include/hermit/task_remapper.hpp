@@ -26,12 +26,12 @@ namespace hermit {
   class poller_core {
     public:
       template< typename Func >
-      poller_core( boost::asio::io_service &service, Func func,
-        boost::posix_time::milliseconds time
-      ) : timer( service ), task( func ), interval( time ) {
-        timer.expires_from_now( interval );
-        timer.async_wait( boost::bind( &poller_core::timeout, this, boost::asio::placeholders::error ) );
-      }
+        poller_core( boost::asio::io_service &service, Func func,
+            boost::posix_time::milliseconds time
+            ) : timer( service ), task( func ), interval( time ) {
+          timer.expires_from_now( interval );
+          timer.async_wait( boost::bind( &poller_core::timeout, this, boost::asio::placeholders::error ) );
+        }
       void timeout( const boost::system::error_code &error ) {
         if( !error ) {
           task();
@@ -40,19 +40,19 @@ namespace hermit {
         }
       }
     private:
-    boost::asio::deadline_timer timer;
-    std::function< void() > task;
-    boost::posix_time::milliseconds interval;
+      boost::asio::deadline_timer timer;
+      std::function< void() > task;
+      boost::posix_time::milliseconds interval;
   };
 
   class poller {
     public:
       template< typename Func >
-      poller( boost::asio::io_service &service_, Func func,
-        boost::posix_time::milliseconds time
-      ) : core( new poller_core( service_, func, time ) ) {}
+        poller( boost::asio::io_service &service_, Func func,
+            boost::posix_time::milliseconds time
+            ) : core( new poller_core( service_, func, time ) ) {}
     private:
-    std::shared_ptr< poller_core > core;
+      std::shared_ptr< poller_core > core;
   };
 
   class task_remapper {
@@ -101,6 +101,15 @@ namespace hermit {
         void set_epilogue( T func ) {
           epilogue.post( func );
         }
+      void sync() {
+#ifdef BOOST_NO_0X_HDR_FUTURE
+        std::shared_ptr< boost::thread::promise< void > > signal( new boost::thread::promise< void >() );
+#else
+        std::shared_ptr< std::promise< void > > signal( new std::promise< void >() );
+#endif
+        task_queue.post( [=](){ signal->set_value(); } );
+        signal->get_future().wait();
+      }
     private:
       static void null_epilogue() {}
       void run() noexcept {
