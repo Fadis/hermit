@@ -85,8 +85,10 @@ namespace hermit {
 #ifdef BOOST_NO_0X_HDR_FUTURE
         end_sync.join_all();
 #else
-        for( auto &elem: end_sync )
-          elem.get();
+        for(
+          std::vector< std::future< void > >::iterator iter = end_sync.begin();
+          iter != end_sync.end(); ++iter
+        ) iter->get();
 #endif
       }
       template< typename T >
@@ -107,14 +109,24 @@ namespace hermit {
 #else
         std::shared_ptr< std::promise< void > > signal( new std::promise< void >() );
 #endif
+#ifdef BOOST_NO_LAMBDAS
+# ifdef BOOST_NO_0X_HDR_FUTURE
+        task_queue.post( std::bind( &boost::thread::promise< void >::set_value, signal ) );
+# else
+        task_queue.post( std::bind( &std::promise< void >::set_value, signal ) );
+#else
         task_queue.post( [=](){ signal->set_value(); } );
+#endif
         signal->get_future().wait();
       }
     private:
       static void null_epilogue() {}
+#ifdef BOOST_NO_NOEXCEPT
+      void run() {
+#else
       void run() noexcept {
+#endif
         try {
-          std::cout << "hoge" << std::endl;
           task_queue.run();
           epilogue.run();
         } catch ( std::exception &e ) {
