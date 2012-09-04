@@ -10,6 +10,7 @@
 #include <boost/tr1/memory.hpp>
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/numeric/interval.hpp>
 
 #ifdef BOOST_NO_0X_HDR_FUTURE
 #include <boost/tr1/functional.hpp>
@@ -27,30 +28,31 @@ namespace hermit {
     public:
       template< typename Func >
         poller_core( boost::asio::io_service &service, Func func,
-            boost::posix_time::milliseconds time
-            ) : timer( service ), task( func ), interval( time ) {
-          timer.expires_from_now( interval );
+            boost::numeric::interval< boost::posix_time::milliseconds > interval_
+            ) : timer( service ), task( func ), interval( interval_ ) {
+          timer.expires_from_now( upper( interval ) );
           timer.async_wait( boost::bind( &poller_core::timeout, this, boost::asio::placeholders::error ) );
         }
       void timeout( const boost::system::error_code &error ) {
         if( !error ) {
+          
           task();
-          timer.expires_from_now( interval );
+          timer.expires_from_now( upper( interval ) );
           timer.async_wait( boost::bind( &poller_core::timeout, this, boost::asio::placeholders::error ) );
         }
       }
     private:
       boost::asio::deadline_timer timer;
       std::function< void() > task;
-      boost::posix_time::milliseconds interval;
+      boost::numeric::interval< boost::posix_time::milliseconds > interval;
   };
 
   class poller {
     public:
       template< typename Func >
         poller( boost::asio::io_service &service_, Func func,
-            boost::posix_time::milliseconds time
-            ) : core( new poller_core( service_, func, time ) ) {}
+            boost::numeric::interval< boost::posix_time::milliseconds > interval
+            ) : core( new poller_core( service_, func, interval ) ) {}
     private:
       std::shared_ptr< poller_core > core;
   };
@@ -97,7 +99,11 @@ namespace hermit {
         }
       template< typename T, typename Time >
         poller post( T func, Time time ) {
-          return poller( task_queue, func, time );
+          return poller( task_queue, func, boost::numeric::hull( time, time ) );
+        }
+      template< typename T, typename Time >
+        poller post( T func, Time min, Time max ) {
+          return poller( task_queue, func, boost::numeric::hull( min, max ) );
         }
       template< typename T >
         void set_epilogue( T func ) {
