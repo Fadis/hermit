@@ -3,7 +3,7 @@
 #include <boost/optional.hpp>
 
 hermit::poller hoge( hermit::task_remapper &sched ) {
-  return sched.post( [](){ std::cout << "foo" << std::endl; }, boost::posix_time::milliseconds(200) );
+  return sched.post( [](){ std::cout << "foo" << std::endl; }, boost::chrono::milliseconds(200) );
 }
 
 int main() {

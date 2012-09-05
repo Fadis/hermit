@@ -22,7 +22,7 @@ set(CMAKE_C_FLAGS_RELEASE "-W -Wall -O3")
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
 set(Boost_USE_MULTITHREADED ON)
-find_package(Boost 1.42.0 COMPONENTS thread filesystem chrono system REQUIRED )
+find_package(Boost 1.49.0 COMPONENTS thread filesystem chrono system REQUIRED )
 if (NOT Boost_FOUND)
   message(SEND_ERROR "Boost not found")
 endif (NOT Boost_FOUND)

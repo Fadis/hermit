@@ -7,7 +7,7 @@
 #include <exception>
 #include <algorithm>
 #include <boost/asio.hpp>
-#include <boost/asio/system_timer.hpp>
+#include <boost/asio/steady_timer.hpp>
 #include <boost/tr1/memory.hpp>
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
@@ -25,42 +25,43 @@
 #endif
 
 namespace hermit {
+  template< typename Time >
   class poller_core {
     public:
       template< typename Func >
         poller_core( boost::asio::io_service &service, Func func,
-            boost::posix_time::milliseconds interval_
+            Time interval_
             ) : timer( service ), task( func ), interval( interval_ ) {
           time_stamp = boost::chrono::steady_clock::now();
-          timer.expires_from_now( interval );
+          timer.expires_from_now( interval_ );
           timer.async_wait( boost::bind( &poller_core::timeout, this, boost::asio::placeholders::error ) );
         }
       void timeout( const boost::system::error_code &error ) {
         if( !error ) {
           task();
           boost::chrono::time_point<boost::chrono::steady_clock> new_time_stamp = boost::chrono::steady_clock::now();
-          boost::chrono::milliseconds elapsed_time = boost::chrono::duration_cast< boost::chrono::milliseconds >( new_time_stamp - time_stamp );
+          Time elapsed_time = boost::chrono::duration_cast< Time >( new_time_stamp - time_stamp );
           time_stamp = new_time_stamp;
-          auto next_sleep_time = interval.total_milliseconds() + interval.total_milliseconds() - elapsed_time.count();
-          timer.expires_from_now( boost::posix_time::milliseconds( ( next_sleep_time > 0 ) ? next_sleep_time : 0 ) );
+          auto next_sleep_time = interval + interval - elapsed_time;
+          timer.expires_from_now( ( next_sleep_time > Time( 0 ) ) ? next_sleep_time : Time( 0 ) );
           timer.async_wait( boost::bind( &poller_core::timeout, this, boost::asio::placeholders::error ) );
         }
       }
     private:
-      boost::asio::deadline_timer timer;
+      boost::asio::steady_timer timer;
       std::function< void() > task;
-      boost::posix_time::milliseconds interval;
+      Time interval;
       boost::chrono::time_point<boost::chrono::steady_clock> time_stamp;
   };
 
   class poller {
     public:
-      template< typename Func >
+      template< typename Func, typename Time >
         poller( boost::asio::io_service &service_, Func func,
-            boost::posix_time::milliseconds interval
-            ) : core( new poller_core( service_, func, interval ) ) {}
+            Time interval
+            ) : core( new poller_core< Time >( service_, func, interval ) ) {}
     private:
-      std::shared_ptr< poller_core > core;
+      std::shared_ptr< void > core;
   };
 
   class task_remapper {
