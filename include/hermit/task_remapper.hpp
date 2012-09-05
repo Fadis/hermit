@@ -5,12 +5,12 @@
 
 #include <vector>
 #include <exception>
+#include <algorithm>
 #include <boost/asio.hpp>
 #include <boost/asio/system_timer.hpp>
 #include <boost/tr1/memory.hpp>
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/numeric/interval.hpp>
 #include <boost/chrono.hpp>
 
 #ifdef BOOST_NO_0X_HDR_FUTURE
@@ -29,10 +29,10 @@ namespace hermit {
     public:
       template< typename Func >
         poller_core( boost::asio::io_service &service, Func func,
-            boost::numeric::interval< boost::posix_time::milliseconds > interval_
+            boost::posix_time::milliseconds interval_
             ) : timer( service ), task( func ), interval( interval_ ) {
           time_stamp = boost::chrono::steady_clock::now();
-          timer.expires_from_now( lower( interval ) );
+          timer.expires_from_now( interval );
           timer.async_wait( boost::bind( &poller_core::timeout, this, boost::asio::placeholders::error ) );
         }
       void timeout( const boost::system::error_code &error ) {
@@ -41,15 +41,15 @@ namespace hermit {
           boost::chrono::time_point<boost::chrono::steady_clock> new_time_stamp = boost::chrono::steady_clock::now();
           boost::chrono::milliseconds elapsed_time = boost::chrono::duration_cast< boost::chrono::milliseconds >( new_time_stamp - time_stamp );
           time_stamp = new_time_stamp;
-          auto next_sleep_time = lower( interval ).total_milliseconds() + lower( interval ).total_milliseconds() - elapsed_time.count();
-          timer.expires_from_now( boost::posix_time::milliseconds( std::max( next_sleep_time, 0l ) ) );
+          auto next_sleep_time = interval.total_milliseconds() + interval.total_milliseconds() - elapsed_time.count();
+          timer.expires_from_now( boost::posix_time::milliseconds( ( next_sleep_time > 0 ) ? next_sleep_time : 0 ) );
           timer.async_wait( boost::bind( &poller_core::timeout, this, boost::asio::placeholders::error ) );
         }
       }
     private:
       boost::asio::deadline_timer timer;
       std::function< void() > task;
-      boost::numeric::interval< boost::posix_time::milliseconds > interval;
+      boost::posix_time::milliseconds interval;
       boost::chrono::time_point<boost::chrono::steady_clock> time_stamp;
   };
 
@@ -57,7 +57,7 @@ namespace hermit {
     public:
       template< typename Func >
         poller( boost::asio::io_service &service_, Func func,
-            boost::numeric::interval< boost::posix_time::milliseconds > interval
+            boost::posix_time::milliseconds interval
             ) : core( new poller_core( service_, func, interval ) ) {}
     private:
       std::shared_ptr< poller_core > core;
@@ -105,11 +105,7 @@ namespace hermit {
         }
       template< typename T, typename Time >
         poller post( T func, Time time ) {
-          return poller( task_queue, func, boost::numeric::hull( time, time ) );
-        }
-      template< typename T, typename Time >
-        poller post( T func, Time min, Time max ) {
-          return poller( task_queue, func, boost::numeric::hull( min, max ) );
+          return poller( task_queue, func, time );
         }
       template< typename T >
         void set_epilogue( T func ) {
@@ -117,7 +113,7 @@ namespace hermit {
         }
       void sync() {
 #ifdef BOOST_NO_0X_HDR_FUTURE
-        std::shared_ptr< boost::thread::promise< void > > signal( new boost::thread::promise< void >() );
+        std::shared_ptr< boost::promise< void > > signal( new boost::promise< void >() );
 #else
         std::shared_ptr< std::promise< void > > signal( new std::promise< void >() );
 #endif
