@@ -11,6 +11,7 @@
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/numeric/interval.hpp>
+#include <boost/chrono.hpp>
 
 #ifdef BOOST_NO_0X_HDR_FUTURE
 #include <boost/tr1/functional.hpp>
@@ -30,14 +31,18 @@ namespace hermit {
         poller_core( boost::asio::io_service &service, Func func,
             boost::numeric::interval< boost::posix_time::milliseconds > interval_
             ) : timer( service ), task( func ), interval( interval_ ) {
-          timer.expires_from_now( upper( interval ) );
+          time_stamp = boost::chrono::steady_clock::now();
+          timer.expires_from_now( lower( interval ) );
           timer.async_wait( boost::bind( &poller_core::timeout, this, boost::asio::placeholders::error ) );
         }
       void timeout( const boost::system::error_code &error ) {
         if( !error ) {
-          
           task();
-          timer.expires_from_now( upper( interval ) );
+          boost::chrono::time_point<boost::chrono::steady_clock> new_time_stamp = boost::chrono::steady_clock::now();
+          boost::chrono::milliseconds elapsed_time = boost::chrono::duration_cast< boost::chrono::milliseconds >( new_time_stamp - time_stamp );
+          time_stamp = new_time_stamp;
+          auto next_sleep_time = lower( interval ).total_milliseconds() + lower( interval ).total_milliseconds() - elapsed_time.count();
+          timer.expires_from_now( boost::posix_time::milliseconds( std::max( next_sleep_time, 0l ) ) );
           timer.async_wait( boost::bind( &poller_core::timeout, this, boost::asio::placeholders::error ) );
         }
       }
@@ -45,6 +50,7 @@ namespace hermit {
       boost::asio::deadline_timer timer;
       std::function< void() > task;
       boost::numeric::interval< boost::posix_time::milliseconds > interval;
+      boost::chrono::time_point<boost::chrono::steady_clock> time_stamp;
   };
 
   class poller {
