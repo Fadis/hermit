@@ -32,6 +32,8 @@ if (NOT TomMath_FOUND)
   message(SEND_ERROR "TomMath not found. Huge integer will not work." )
 endif (NOT TomMath_FOUND)
 
+pkg_check_modules( OPENEXR REQUIRED OpenEXR )
+
 #pkg_check_modules(GLFW3 REQUIRED libglfw>=3.0)
 
 
