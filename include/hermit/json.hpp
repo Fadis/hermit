@@ -133,6 +133,22 @@ namespace hermit {
         boost::spirit::karma::rule< Iterator, std::map< string, value >() > object;
     };
 
+    boost::optional< std::string > generate(
+      const value &source
+    ) {
+      std::string result;
+      hermit::json::gen< std::back_insert_iterator< std::string > > gen;
+      if( boost::spirit::karma::generate(
+        std::back_inserter( result ),
+        gen,
+        source
+      ) )
+        return result;
+      else
+        return boost::optional< std::string >();
+    }
+
+
   }
 }
 
