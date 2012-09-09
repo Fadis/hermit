@@ -41,6 +41,15 @@ int main() {
   std::string sample;
   std::getline( std::cin, sample );
   auto result = hermit::json::parse( sample );
+ 
+  std::string result2; 
+  hermit::json::gen< std::back_insert_iterator< std::string > > gen;
+  boost::spirit::karma::generate(
+    std::back_inserter( result2 ),
+    gen,
+    result
+  );
+  std::cout << result2 << std::endl;
   if( result ) {
     apply_visitor( printer(), *result );
     std::cout << std::endl;

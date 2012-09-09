@@ -10,9 +10,12 @@
 #include <boost/variant.hpp>
 #include <boost/variant/recursive_variant.hpp>
 #include <boost/spirit/include/qi.hpp>
+#include <boost/spirit/include/karma.hpp>
 #include <boost/spirit/include/phoenix.hpp>
 #include <boost/range.hpp>
 #include <boost/optional.hpp>
+#include <boost/fusion/adapted/std_pair.hpp>
+#include <boost/fusion/include/std_pair.hpp>
 
 #include <hermit/range_traits.hpp>
 
@@ -58,24 +61,16 @@ namespace hermit {
         string_ = '"' >> *( ( char_ - cntrl - '\\' - '"' )|escape_sequence ) >> '"';
         array = skip( blank )[ '[' >> -( value_ % ',' ) >>  ']' ];
         named_value = skip( blank )[ ( string_ >> ':' >> value_ ) ];
-        object = skip( blank )[ '{' >> -( named_value % ',' )[
-          _val = boost::phoenix::bind( &build_map, _1 )
-        ] >> '}' ];
+        object = skip( blank )[ '{' >> -( named_value % ',' ) >> '}' ];
       } 
     private:
-      static std::map< string, value > build_map( const std::vector< boost::fusion::vector< string, value > >&vec ) {
-        std::map< string, value > temp;
-        for( auto elem: vec )
-          temp[ boost::fusion::at_c<0>( elem ) ] = boost::fusion::at_c<1>( elem );
-        return temp;
-      }
       boost::spirit::qi::rule< Iterator, value() > root;
       boost::spirit::qi::rule< Iterator, char() > escape_sequence;
       boost::spirit::qi::rule< Iterator, string() > string_;
       boost::spirit::qi::rule< Iterator, std::nullptr_t() > null_;
       boost::spirit::qi::rule< Iterator, value() > value_;
       boost::spirit::qi::rule< Iterator, std::vector< value >() > array;
-      boost::spirit::qi::rule< Iterator, boost::fusion::vector< string, value >() > named_value;
+      boost::spirit::qi::rule< Iterator, std::pair< string, value >() > named_value;
       boost::spirit::qi::rule< Iterator, std::map< string, value >() > object;
 
     };
@@ -104,6 +99,40 @@ namespace hermit {
       else
         return boost::optional< value >();
     }
+
+    typedef boost::make_recursive_variant<
+      string,
+      double
+    >::type value2;
+    
+    template <typename Iterator>
+    class gen :
+      public boost::spirit::karma::grammar< Iterator, value() > {
+      public:
+        gen() : gen::base_type( value_ ) {
+          using namespace boost::spirit;
+          null_ = karma::string[ _1 = boost::phoenix::val( "null" ) ];
+          root = object|array;
+          value_ = string_|karma::double_|object|array|karma::bool_|null_;
+          escape_sequence.add( '"', "\\\"" )( '\\', "\\\\" )( '/', "\\/" )
+              ( '\b', "\\b" )( '\n', "\\n" )( '\f', "\\f" )
+              ( '\r', "\\r" )( '\t', "\\t" );
+          string_ = '"' << *( escape_sequence | karma::print | "\\" << karma::hex ) << '"';
+          array = '[' << -( value_ % ',' ) << ']';
+          named_value = ( string_ << ':' << value_ );
+          object = '{' << -( named_value % ',' ) << '}';
+        }
+      private:
+        boost::spirit::karma::rule< Iterator, value() > root;
+        boost::spirit::karma::symbols<char, std::string> escape_sequence;
+        boost::spirit::karma::rule<Iterator, std::string()> string_;
+        boost::spirit::karma::rule< Iterator, std::nullptr_t> null_;
+        boost::spirit::karma::rule< Iterator, value() > value_;
+        boost::spirit::karma::rule< Iterator, std::vector< value >() > array;
+        boost::spirit::karma::rule< Iterator, std::pair< string, value >() > named_value;
+        boost::spirit::karma::rule< Iterator, std::map< string, value >() > object;
+    };
+
   }
 }
 
