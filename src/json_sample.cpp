@@ -5,8 +5,7 @@
 
 
 int main() {
-  std::string sample;
-  std::getline( std::cin, sample );
+  std::string sample( std::istream_iterator<char>( std::cin ), std::istream_iterator<char>() );
   const auto decoded = hermit::json::parse( sample );
   if( decoded ) {
     const auto encoded = hermit::json::generate( *decoded );

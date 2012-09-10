@@ -3,7 +3,11 @@
 #include <boost/optional.hpp>
 
 hermit::poller hoge( hermit::task_remapper &sched ) {
+#ifdef BOOST_ASIO_HAS_STD_CHRONO
+  return sched.post( [](){ std::cout << "foo" << std::endl; }, std::chrono::milliseconds(200) );
+#else
   return sched.post( [](){ std::cout << "foo" << std::endl; }, boost::chrono::milliseconds(200) );
+#endif
 }
 
 int main() {

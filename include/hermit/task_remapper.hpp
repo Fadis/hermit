@@ -7,11 +7,16 @@
 #include <exception>
 #include <algorithm>
 #include <boost/asio.hpp>
-#include <boost/asio/steady_timer.hpp>
+#include <boost/asio/high_resolution_timer.hpp>
 #include <boost/tr1/memory.hpp>
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
+
+#ifdef BOOST_ASIO_HAS_STD_CHRONO
+#include <chrono>
+#else
 #include <boost/chrono.hpp>
+#endif
 
 #ifdef BOOST_NO_0X_HDR_FUTURE
 #include <boost/tr1/functional.hpp>
@@ -32,15 +37,25 @@ namespace hermit {
         poller_core( boost::asio::io_service &service, Func func,
             Time interval_
             ) : timer( service ), task( func ), interval( interval_ ) {
-          time_stamp = boost::chrono::steady_clock::now();
+#ifdef BOOST_ASIO_HAS_STD_CHRONO
+          using std::chrono::high_resolution_clock; 
+#else
+          using boost::chrono::high_resolution_clock; 
+#endif
+          time_stamp = high_resolution_clock::now();
           timer.expires_from_now( interval_ );
           timer.async_wait( boost::bind( &poller_core::timeout, this, boost::asio::placeholders::error ) );
         }
       void timeout( const boost::system::error_code &error ) {
+#ifdef BOOST_ASIO_HAS_STD_CHRONO
+        using namespace std::chrono; 
+#else
+        using namespace boost::chrono; 
+#endif
         if( !error ) {
           task();
-          boost::chrono::time_point<boost::chrono::steady_clock> new_time_stamp = boost::chrono::steady_clock::now();
-          Time elapsed_time = boost::chrono::duration_cast< Time >( new_time_stamp - time_stamp );
+          time_point<high_resolution_clock> new_time_stamp = high_resolution_clock::now();
+          Time elapsed_time = duration_cast< Time >( new_time_stamp - time_stamp );
           time_stamp = new_time_stamp;
           auto next_sleep_time = interval + interval - elapsed_time;
           timer.expires_from_now( ( next_sleep_time > Time( 0 ) ) ? next_sleep_time : Time( 0 ) );
@@ -48,10 +63,14 @@ namespace hermit {
         }
       }
     private:
-      boost::asio::steady_timer timer;
+      boost::asio::high_resolution_timer timer;
       std::function< void() > task;
       Time interval;
-      boost::chrono::time_point<boost::chrono::steady_clock> time_stamp;
+#ifdef BOOST_ASIO_HAS_STD_CHRONO
+      std::chrono::time_point<std::chrono::high_resolution_clock> time_stamp;
+#else
+      boost::chrono::time_point<boost::chrono::high_resolution_clock> time_stamp;
+#endif
   };
 
   class poller {
