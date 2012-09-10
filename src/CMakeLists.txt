@@ -23,6 +23,8 @@ ADD_EXECUTABLE( task_remapper_sample task_remapper_sample.cpp )
 target_link_libraries( task_remapper_sample ${Boost_LIBRARIES} )
 ADD_EXECUTABLE( task_remapper_poll_sample task_remapper_poll_sample.cpp )
 target_link_libraries( task_remapper_poll_sample ${Boost_LIBRARIES} )
+ADD_EXECUTABLE( exr exr.cpp )
+target_link_libraries( exr ${Boost_LIBRARIES} ${OPENEXR_LIBRARIES} )
 
 install( TARGETS hermit_mpint hermit_ip
   RUNTIME DESTINATION bin
