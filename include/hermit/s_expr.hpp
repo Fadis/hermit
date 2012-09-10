@@ -6,8 +6,12 @@
 #include <boost/variant.hpp>
 #include <boost/variant/recursive_variant.hpp>
 #include <boost/spirit/include/qi.hpp>
+#include <boost/spirit/include/karma.hpp>
+#include <boost/spirit/include/phoenix.hpp>
 #include <boost/range.hpp>
 #include <boost/optional.hpp>
+#include <boost/fusion/adapted/std_pair.hpp>
+#include <boost/fusion/include/std_pair.hpp>
 
 #include <hermit/range_traits.hpp>
 
@@ -21,6 +25,9 @@ namespace hermit {
       symbol(){}
       symbol( const std::string &name_ ) : name( name_ ) {}
       const std::string &get_name() const { return name; }
+      operator std::string() const {
+        return name;
+      }
     private:
       std::string name;
     };
@@ -93,6 +100,25 @@ namespace hermit {
       else
         return boost::optional< node >();
     }
+
+    template <typename Iterator>
+    class gen :
+      public boost::spirit::karma::grammar< Iterator, node() > {
+      public:
+        gen() : gen::base_type( root ) {
+          using namespace boost::spirit;
+          using namespace boost::spirit::karma;
+          escape.add( '(', "\\(" )( ')', "\\)" )( '[', "\\[" )( ']', "\\]" )
+              ( '{', "\\{" )( '}', "\\}" )( '\\', "\\\\" )( '"', "\\\"" )
+              ( '\'', "\\'" );
+          symbol_ = ( alpha << *( escape|graph ) );
+        }
+      private:
+        boost::spirit::karma::rule< Iterator, string() > symbol_;
+        boost::spirit::karma::symbols<char, std::string> escape;
+        boost::spirit::karma::rule< Iterator, node() > root;
+    };
+  
   }
 }
 

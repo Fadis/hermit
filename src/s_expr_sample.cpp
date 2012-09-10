@@ -24,6 +24,7 @@ struct print : boost::static_visitor<void> {
 };
 
 int main() {
+  hermit::s_expr::gen< std::back_insert_iterator< std::string > > gen;
   std::string sample;
   std::getline( std::cin, sample );
   auto result = hermit::s_expr::parse( sample );
