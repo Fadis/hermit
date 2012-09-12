@@ -24,20 +24,21 @@ namespace hermit {
     typedef std::string string;
     
     typedef boost::make_recursive_variant<
-      double,
-      float,
-      uint64_t,
+      uint8_t,
+      uint16_t,
       uint32_t,
       uint64_t,
-      uint8_t,
-      int64_t,
+      int8_t,
+      int16_t,
       int32_t,
       int64_t,
-      int8_t,
+      float,
+      double,
+      std::nullptr_t,
       bool,
-      std::map< std::string, boost::recursive_variant_ >,
+      std::vector< uint8_t >,
       std::vector< boost::recursive_variant_ >,
-      std::nullptr_t
+      std::map< boost::recursive_variant_, boost::recursive_variant_ >
     >::type value;
 
     template< typename Iterator >
@@ -47,11 +48,8 @@ namespace hermit {
         value()
       > {
     public:
-      rule() : rule::base_type( root ) {
+      rule() : rule::base_type( value_ ) {
         using namespace boost::spirit;
-        null_ = byte_( 0xc0 )[ _val = nullptr ];
-      //  root = object|array;
-      //  value_ = string_|double_|object|array|bool_|null_;
         uint8_ = byte_[ qi::_pass = qi::_1 < 0x80, qi::_val = qi::_1 ] | ( byte_( 0xcc ) >> byte_ );
         uint16_ = byte_( 0xcd ) >> big_word;
         uint32_ = byte_( 0xce ) >> big_dword;
@@ -85,23 +83,29 @@ namespace hermit {
             qi::_val = -boost::phoenix::static_cast_<int64_t>( 0xFFFFFFFFFFFFFFFFul - qi::_1 )-1
           ]
         ];
+        null_ = byte_( 0xc0 )[ _val = nullptr ];
         bool_ = byte_( 0xc3 )[ qi::_val = true ]|byte_( 0xc2 )[ qi::_val = false ];
         float_ = byte_( 0xca ) >> big_bin_float;
         double_ = byte_( 0xcb ) >> big_bin_double;
-//        array = omit[ byte_[ qi::_pass = ( qi::_1 & 0xF0 ) == 0x90, qi::_val = 0 ] ] >> repeat(_a)[ value_ ];
-          /*( byte_[ qi::_pass = ( qi::_1 & 0xE0 ) == 0xC0, qi::_a = qi::_1 & 0x1F ] >> qi::repeat(qi::_a)[ byte_ ] )|
-          ( omit[ byte_( 0xda ) >> big_word[ qi::_a = qi::_1 ] ] >> repeat(qi::_a)[ byte_ ] )|
-          ( omit[ byte_( 0xdb ) >> big_dword[ qi::_a = qi::_1 ] ] >> repeat(qi::_a)[ byte_ ] );*/
-      //  string_ = '"' >> *( ( char_ - cntrl - '\\' - '"' )|escape_sequence ) >> '"';
-      //  array = skip( blank )[ '[' >> -( value_ % ',' ) >>  ']' ];
-      //  named_value = skip( blank )[ ( string_ >> ':' >> value_ ) ];
-      //  object = skip( blank )[ '{' >> -( named_value % ',' ) >> '}' ];
+        raw = omit[
+          byte_[ qi::_pass = ( qi::_1 & 0xE0 ) == 0xC0, qi::_a = qi::_1 & 0x1F ]|
+          ( byte_( 0xda ) >> big_word[ qi::_a = qi::_1 ] )|
+          ( byte_( 0xdb ) >> big_dword[ qi::_a = qi::_1 ] )
+        ] >> qi::repeat(qi::_a)[ byte_ ];
+        array = omit[
+          byte_[ qi::_pass = ( qi::_1 & 0xF0 ) == 0x90, qi::_a = qi::_1 & 0x0F ]|
+          ( byte_( 0xdc ) >> big_word[ qi::_a = qi::_1 ] )|
+          ( byte_( 0xdd ) >> big_dword[ qi::_a = qi::_1 ] )
+        ] >> qi::repeat(qi::_a)[ value_ ];
+        named_value = value_ >> value_;
+        map = omit[
+          byte_[ qi::_pass = ( qi::_1 & 0xF0 ) == 0x80, qi::_a = qi::_1 & 0x0F ]|
+          ( byte_( 0xde ) >> big_word[ qi::_a = qi::_1 ] )|
+          ( byte_( 0xdf ) >> big_dword[ qi::_a = qi::_1 ] )
+        ] >> qi::repeat(qi::_a)[ named_value ];
+        value_ = uint8_|uint16_|uint32_|uint64_|int8_|int16_|int32_|int64_|null_|bool_|float_|double_|raw|array|map;
       } 
     private:
-      boost::spirit::qi::rule< Iterator, value() > root;
-      boost::spirit::qi::rule< Iterator, char() > escape_sequence;
-      boost::spirit::qi::rule< Iterator, string() > string_;
-      boost::spirit::qi::rule< Iterator, std::nullptr_t() > null_;
       boost::spirit::qi::rule< Iterator, uint8_t() > uint8_;
       boost::spirit::qi::rule< Iterator, uint16_t() > uint16_;
       boost::spirit::qi::rule< Iterator, uint32_t() > uint32_;
@@ -110,14 +114,15 @@ namespace hermit {
       boost::spirit::qi::rule< Iterator, int16_t() > int16_;
       boost::spirit::qi::rule< Iterator, int32_t() > int32_;
       boost::spirit::qi::rule< Iterator, int64_t() > int64_;
+      boost::spirit::qi::rule< Iterator, std::nullptr_t() > null_;
       boost::spirit::qi::rule< Iterator, bool() > bool_;
       boost::spirit::qi::rule< Iterator, float() > float_;
       boost::spirit::qi::rule< Iterator, double() > double_;
-      boost::spirit::qi::rule< Iterator, uint8_t() > bin_block_;
+      boost::spirit::qi::rule< Iterator, std::vector< uint8_t >(), boost::spirit::qi::locals< uint32_t > > raw;
+      boost::spirit::qi::rule< Iterator, std::vector< value >(), boost::spirit::qi::locals< uint32_t > > array;
+      boost::spirit::qi::rule< Iterator, std::pair< value, value >() > named_value;
+      boost::spirit::qi::rule< Iterator, std::map< value, value >(), boost::spirit::qi::locals< uint32_t > > map;
       boost::spirit::qi::rule< Iterator, value() > value_;
-      boost::spirit::qi::rule< Iterator, std::vector< value >() > array;
-      boost::spirit::qi::rule< Iterator, std::pair< string, value >() > named_value;
-      boost::spirit::qi::rule< Iterator, std::map< string, value >() > object;
 
     };
 
