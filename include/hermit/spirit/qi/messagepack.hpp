@@ -60,7 +60,7 @@ namespace hermit {
               qi::_val = -boost::phoenix::static_cast_<int64_t>( 0xFFFFFFFFFFFFFFFFull - qi::_1 )-1
             ]
           ];
-          null_ = qi::byte_( 0xc0 )[ qi::_val = nullptr ];
+          null_ = qi::byte_( 0xc0 )[ qi::_val = none_type() ];
           bool_ = qi::byte_( 0xc3 )[ qi::_val = true ]|qi::byte_( 0xc2 )[ qi::_val = false ];
           float_ = qi::byte_( 0xca ) >> qi::big_bin_float;
           double_ = qi::byte_( 0xcb ) >> qi::big_bin_double;
@@ -91,7 +91,7 @@ namespace hermit {
         boost::spirit::qi::rule< Iterator, int16_t() > int16_;
         boost::spirit::qi::rule< Iterator, int32_t() > int32_;
         boost::spirit::qi::rule< Iterator, int64_t() > int64_;
-        boost::spirit::qi::rule< Iterator, std::nullptr_t() > null_;
+        boost::spirit::qi::rule< Iterator, none_type() > null_;
         boost::spirit::qi::rule< Iterator, bool() > bool_;
         boost::spirit::qi::rule< Iterator, float() > float_;
         boost::spirit::qi::rule< Iterator, double() > double_;

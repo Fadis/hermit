@@ -38,7 +38,7 @@ namespace hermit {
           boost::spirit::karma::rule< Iterator, hermit::json() > root;
           boost::spirit::karma::symbols<char, std::string> escape_sequence;
           boost::spirit::karma::rule<Iterator, std::string()> string_;
-          boost::spirit::karma::rule< Iterator, std::nullptr_t> null_;
+          boost::spirit::karma::rule< Iterator, none_type()> null_;
           boost::spirit::karma::rule< Iterator, hermit::json() > value_;
           boost::spirit::karma::rule< Iterator, std::vector< hermit::json >() > array;
           boost::spirit::karma::rule< Iterator, std::pair< std::string, hermit::json >() > named_value;

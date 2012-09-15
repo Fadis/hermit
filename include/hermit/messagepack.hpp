@@ -9,6 +9,8 @@
 #include <boost/variant/recursive_variant.hpp>
 #include <boost/optional.hpp>
 
+#include <hermit/none_type.hpp>
+
 namespace hermit {
   typedef boost::make_recursive_variant<
     uint8_t,
@@ -21,7 +23,7 @@ namespace hermit {
     int64_t,
     float,
     double,
-    std::nullptr_t,
+    none_type,
     bool,
     std::vector< uint8_t >,
     std::vector< boost::recursive_variant_ >,

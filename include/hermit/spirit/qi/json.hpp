@@ -28,7 +28,7 @@ namespace hermit {
         json() : json::base_type( root ) {
           using namespace boost::spirit;
           using namespace boost::spirit::ascii;
-          null_ = lit( "null" )[ _val = nullptr ];
+          null_ = lit( "null" )[ _val = none_type() ];
           root = object|array;
           value_ = string_|double_|object|array|bool_|null_;
           escape_sequence = '\\' >> (
@@ -51,7 +51,7 @@ namespace hermit {
         boost::spirit::qi::rule< Iterator, hermit::json() > root;
         boost::spirit::qi::rule< Iterator, char() > escape_sequence;
         boost::spirit::qi::rule< Iterator, std::string() > string_;
-        boost::spirit::qi::rule< Iterator, std::nullptr_t() > null_;
+        boost::spirit::qi::rule< Iterator, none_type() > null_;
         boost::spirit::qi::rule< Iterator, hermit::json() > value_;
         boost::spirit::qi::rule< Iterator, std::vector< hermit::json >() > array;
         boost::spirit::qi::rule< Iterator, std::pair< std::string, hermit::json >() > named_value;

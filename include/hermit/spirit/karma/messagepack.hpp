@@ -125,7 +125,7 @@ namespace hermit {
         boost::spirit::karma::rule< Iterator, int16_t() > int16_;
         boost::spirit::karma::rule< Iterator, int32_t() > int32_;
         boost::spirit::karma::rule< Iterator, int64_t() > int64_;
-        boost::spirit::karma::rule< Iterator, std::nullptr_t() > null_;
+        boost::spirit::karma::rule< Iterator, none_type() > null_;
         boost::spirit::karma::rule< Iterator, bool() > bool_;
         boost::spirit::karma::rule< Iterator, float() > float_;
         boost::spirit::karma::rule< Iterator, double() > double_;

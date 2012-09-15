@@ -7,6 +7,8 @@
 #include <boost/variant.hpp>
 #include <boost/variant/recursive_variant.hpp>
 
+#include <hermit/none_type.hpp>
+
 namespace hermit {
   typedef boost::make_recursive_variant<
     std::string,
@@ -14,7 +16,7 @@ namespace hermit {
     std::map< std::string, boost::recursive_variant_ >,
     std::vector< boost::recursive_variant_ >,
     bool,
-    std::nullptr_t
+    none_type
   >::type json;
 }
 
