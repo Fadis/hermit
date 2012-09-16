@@ -27,34 +27,34 @@ namespace hermit {
       public:
         messagepack() : messagepack::base_type( value_ ) {
           namespace qi = boost::spirit::qi;
-          uint8_ = qi::byte_[ qi::_pass = qi::_1 < 0x80, qi::_val = qi::_1 ] | ( qi::byte_( 0xcc ) >> qi::byte_ );
+          uint8_ = qi::byte_[ qi::_pass = ( qi::_1 & 0x80 ) == 0x00, qi::_val = qi::_1 ] | ( qi::byte_( 0xcc ) >> qi::byte_ );
           uint16_ = qi::byte_( 0xcd ) >> qi::big_word;
           uint32_ = qi::byte_( 0xce ) >> qi::big_dword;
           uint64_ = qi::byte_( 0xcf ) >> qi::big_qword;
           int8_ =
             qi::byte_[ qi::_pass = ( qi::_1 & 0xE0 ) == 0xE0, qi::_val = -boost::phoenix::static_cast_<int8_t>( 0xFF - qi::_1 )-1 ] |
-            ( qi::byte_( 0xd0 ) >> qi::byte_[ boost::phoenix::if_( qi::_1 < 0x80 )[
+            ( qi::byte_( 0xd0 ) >> qi::byte_[ boost::phoenix::if_( qi::_1 <= 0x7F )[
               qi::_val = qi::_1
             ].else_[
               qi::_val = -boost::phoenix::static_cast_<int8_t>( 0xFF - qi::_1 )-1
             ]
           ] );
           int16_ =
-            qi::byte_( 0xd1 ) >> qi::big_word[ boost::phoenix::if_( qi::_1 < 0x8000 )[
+            qi::byte_( 0xd1 ) >> qi::big_word[ boost::phoenix::if_( qi::_1 <= 0x7FFF )[
               qi::_val = qi::_1
             ].else_[
               qi::_val = -boost::phoenix::static_cast_<int16_t>( 0xFFFF - qi::_1 )-1
             ]
           ];
           int32_ =
-            qi::byte_( 0xd2 ) >> qi::big_dword[ boost::phoenix::if_( qi::_1 < 0x80000000ul )[
+            qi::byte_( 0xd2 ) >> qi::big_dword[ boost::phoenix::if_( qi::_1 <= 0x7FFFFFFF )[
               qi::_val = qi::_1
             ].else_[
               qi::_val = -boost::phoenix::static_cast_<int32_t>( 0xFFFFFFFFul - qi::_1 )-1
             ]
           ];
           int64_ =
-            qi::byte_( 0xd3 ) >> qi::big_qword[ boost::phoenix::if_( qi::_1 < 0x8000000000000000ull )[
+            qi::byte_( 0xd3 ) >> qi::big_qword[ boost::phoenix::if_( qi::_1 < 0x7FFFFFFFFFFFFFFFll )[
               qi::_val = qi::_1
             ].else_[
               qi::_val = -boost::phoenix::static_cast_<int64_t>( 0xFFFFFFFFFFFFFFFFull - qi::_1 )-1
@@ -65,7 +65,7 @@ namespace hermit {
           float_ = qi::byte_( 0xca ) >> qi::big_bin_float;
           double_ = qi::byte_( 0xcb ) >> qi::big_bin_double;
           raw = qi::omit[
-            qi::byte_[ qi::_pass = ( qi::_1 & 0xE0 ) == 0xC0, qi::_a = qi::_1 & 0x1F ]|
+            qi::byte_[ qi::_pass = ( qi::_1 & 0xE0 ) == 0xA0, qi::_a = qi::_1 & 0x1F ]|
             ( qi::byte_( 0xda ) >> qi::big_word[ qi::_a = qi::_1 ] )|
             ( qi::byte_( 0xdb ) >> qi::big_dword[ qi::_a = qi::_1 ] )
           ] >> qi::repeat(qi::_a)[ qi::byte_ ];

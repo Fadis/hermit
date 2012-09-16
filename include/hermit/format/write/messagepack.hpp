@@ -11,7 +11,7 @@
 #include <hermit/spirit/karma/messagepack.hpp>
 
 namespace hermit {
-  namespace fromat {
+  namespace format {
     boost::optional< std::vector< uint8_t > > write_messagepack(
       const messagepack &source
     ) {

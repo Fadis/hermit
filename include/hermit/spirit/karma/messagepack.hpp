@@ -59,7 +59,7 @@ namespace hermit {
           double_ = karma::byte_( 0xcb ) << karma::big_bin_double;
           raw_short = karma::byte_[
             karma::_pass = boost::phoenix::size( karma::_val ) <= 0x1F,
-            karma::_1 = 0xC0|boost::phoenix::size( karma::_val )
+            karma::_1 = 0xA0|boost::phoenix::size( karma::_val )
           ] << karma::repeat( boost::phoenix::size( karma::_val ) )[ karma::byte_ ][
             karma::_1 = karma::_val
           ];

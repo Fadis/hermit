@@ -34,7 +34,7 @@ namespace hermit {
       if( boost::spirit::qi::parse(iter, boost::end( str ), grammar, result ) && iter == boost::end( str ) )
         return result;
       else
-        return boost::optional< messagepack >();
+       return boost::optional< messagepack >();
     }
   }
 }
