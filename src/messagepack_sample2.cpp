@@ -1,5 +1,6 @@
 #include <iostream>
 #include <iterator>
+#include <fstream>
 #include <string>
 #include <cstdint>
 #include <algorithm>
@@ -21,5 +22,6 @@ int main() {
     std::cerr << "serialization failed." << std::endl;
     std::abort();
   }
-  std::copy( (*result).begin(), (*result).end(), std::ostream_iterator<uint8_t>( std::cout ) );
+  std::fstream file( "sample.mp", std::ios::out|std::ios::binary );
+  std::copy( (*result).begin(), (*result).end(), std::ostreambuf_iterator<char>( file ) );
 }
