@@ -46,6 +46,41 @@ namespace hermit {
               boost::spirit::qi::rule< InputIterator, char32_t() > surrogate_pairs;
               boost::spirit::qi::rule< InputIterator, char32_t() > root;
       };
+      template <typename InputIterator>
+        class utf16bestring :
+          public boost::spirit::qi::grammar< InputIterator, std::u32string() > {
+            public:
+              utf16bestring() : utf16bestring::base_type( root ) {
+                root = *big_endian;
+              }
+            private:
+              utf16be< InputIterator > big_endian;
+              boost::spirit::qi::rule< InputIterator, std::u32string() > root;
+      };
+      template <typename InputIterator>
+        class utf16lestring :
+          public boost::spirit::qi::grammar< InputIterator, std::u32string() > {
+            public:
+              utf16lestring() : utf16lestring::base_type( root ) {
+                root = *little_endian;
+              }
+            private:
+              utf16le< InputIterator > little_endian;
+              boost::spirit::qi::rule< InputIterator, std::u32string() > root;
+      };
+      template <typename InputIterator>
+        class utf16string :
+          public boost::spirit::qi::grammar< InputIterator, std::u32string() > {
+            public:
+              utf16string() : utf16string::base_type( root ) {
+                namespace qi = boost::spirit::qi;
+                root = ( qi::big_word( 0xfeff ) >> big_endian )|( qi::little_word( 0xfeff ) >> little_endian )|big_endian;
+              }
+            private:
+              utf16bestring< InputIterator > big_endian;
+              utf16lestring< InputIterator > little_endian;
+              boost::spirit::qi::rule< InputIterator, std::u32string() > root;
+      };
     }
   }
 }

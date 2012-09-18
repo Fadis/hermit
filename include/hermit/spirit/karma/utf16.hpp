@@ -54,6 +54,40 @@ namespace hermit {
               boost::spirit::karma::rule< OutputIterator, char32_t() > single_word;
               boost::spirit::karma::rule< OutputIterator, char32_t() > root;
       };
+      template< typename OutputIterator >
+        class utf16bestring :
+          public boost::spirit::karma::grammar< OutputIterator, std::u32string() > {
+            public:
+              utf16bestring() : utf16bestring::base_type( root ) {
+                root = *big_endian;
+              }
+            private:
+              utf16be< OutputIterator > big_endian;
+              boost::spirit::karma::rule< OutputIterator, std::u32string() > root;
+      };
+      template< typename OutputIterator >
+        class utf16lestring :
+          public boost::spirit::karma::grammar< OutputIterator, std::u32string() > {
+            public:
+              utf16lestring() : utf16lestring::base_type( root ) {
+                root = *little_endian;
+              }
+            private:
+              utf16le< OutputIterator > little_endian;
+              boost::spirit::karma::rule< OutputIterator, std::u32string() > root;
+      };
+      template< typename OutputIterator >
+        class utf16string :
+          public boost::spirit::karma::grammar< OutputIterator, std::u32string() > {
+            public:
+              utf16string() : utf16string::base_type( root ) {
+                namespace karma = boost::spirit::karma;
+                root = karma::big_word( 0xfeff ) << big_endian;
+              }
+            private:
+              utf16be< OutputIterator > big_endian;
+              boost::spirit::karma::rule< OutputIterator, std::u32string() > root;
+      };
     }
   }
 }
