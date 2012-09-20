@@ -28,18 +28,30 @@ class base64 :
           ( "u", 46 )( "v", 47 )( "w", 48 )( "x", 49 )( "y", 50 )
           ( "z", 51 )( "0", 52 )( "1", 53 )( "2", 54 )( "3", 55 )
           ( "4", 56 )( "5", 57 )( "6", 58 )( "7", 59 )( "8", 60 )
-          ( "9", 61 )( "+", 62 )( "/", 63 )( "=", 0 );
-        block = ( base64alpha >> base64alpha >> base64alpha >> base64alpha )[
+          ( "9", 61 )( "+", 62 )( "/", 63 );
+        block = ( ( base64alpha >> base64alpha >> base64alpha >> base64alpha )[
           qi::_a = ( qi::_1 << 18 )|( qi::_2 << 12 )|( qi::_3 << 6 )|qi::_4,
           phx::push_back( qi::_val, qi::_a >> 16 ),
           phx::push_back( qi::_val, ( qi::_a >> 8 ) & 0xFF ),
           phx::push_back( qi::_val, qi::_a & 0xFF )
-        ];
+        ] );
+        partial_block = 
+        ( ( base64alpha >> base64alpha >> base64alpha >> '=' )[
+          qi::_a = ( qi::_1 << 18 )|( qi::_2 << 12 )|( qi::_3 << 6 ),
+          phx::push_back( qi::_val, qi::_a >> 16 ),
+          phx::push_back( qi::_val, ( qi::_a >> 8 ) & 0xFF )
+        ] )|
+        ( ( base64alpha >> base64alpha >> '=' >> '=' )[
+          qi::_a = ( qi::_1 << 18 )|( qi::_2 << 12 ),
+          phx::push_back( qi::_val, qi::_a >> 16 )
+        ] );
+
         root =
-          qi::skip( qi::byte_ - base64alpha )[ *block[ phx::insert( qi::_val, phx::end( qi::_val ), phx::begin( qi::_1 ), phx::end( qi::_1 ) ) ] ];
+          qi::skip( qi::byte_ - base64alpha )[ *block[ phx::insert( qi::_val, phx::end( qi::_val ), phx::begin( qi::_1 ), phx::end( qi::_1 ) ) ] >> -partial_block[ phx::insert( qi::_val, phx::end( qi::_val ), phx::begin( qi::_1 ), phx::end( qi::_1 ) ) ] ];
       }
     private:
       boost::spirit::qi::rule< InputIterator, std::vector< uint8_t >(), boost::spirit::qi::locals< uint32_t > > block;
+      boost::spirit::qi::rule< InputIterator, std::vector< uint8_t >(), boost::spirit::qi::locals< uint32_t > > partial_block;
       boost::spirit::qi::rule< InputIterator, std::vector< uint8_t >() > root;
       boost::spirit::qi::symbols< char, uint32_t > base64alpha;
   };
