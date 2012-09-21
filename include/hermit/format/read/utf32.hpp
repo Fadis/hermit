@@ -49,7 +49,7 @@ namespace hermit {
         >
       >::type
     >
-    boost::optional< std::u32string > read_utf16be(
+    boost::optional< std::u32string > read_utf32be(
       const T &str
     ) {
       hermit::spirit::qi::utf32bestring< typename range_iterator< const T >::type > grammar;
