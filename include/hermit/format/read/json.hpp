@@ -58,15 +58,15 @@ namespace hermit {
       boost::optional< std::u32string > str_in_ucs4;
       if( encoding == hermit::json_utf32 )
         str_in_ucs4 = hermit::format::read_utf32( str );
-      else if( encoding = hermit::json_utf32be )
+      else if( encoding == hermit::json_utf32be )
         str_in_ucs4 = hermit::format::read_utf32be( str );
-      else if( encoding = hermit::json_utf32le )
+      else if( encoding == hermit::json_utf32le )
         str_in_ucs4 = hermit::format::read_utf32le( str );
       else if( encoding == hermit::json_utf16 )
         str_in_ucs4 = hermit::format::read_utf16( str );
-      else if( encoding = hermit::json_utf16be )
+      else if( encoding == hermit::json_utf16be )
         str_in_ucs4 = hermit::format::read_utf16be( str );
-      else if( encoding = hermit::json_utf16le )
+      else if( encoding == hermit::json_utf16le )
         str_in_ucs4 = hermit::format::read_utf16le( str );
       if( !str_in_ucs4 )
         return boost::optional< std::string >();

@@ -30,43 +30,44 @@ namespace hermit {
       public:
         json_encoding() : json_encoding::base_type( root ) {
           namespace qi = boost::spirit::qi;
-          root = qi::big_dword[
-            qi::_pass = qi::_1 == 0xfeff,
-            qi::_val = hermit::json_utf32
-          ]|
-          qi::little_dword[
-            qi::_pass = qi::_1 == 0xfeff,
-            qi::_val = hermit::json_utf32
-          ]|
-          qi::big_word[
-            qi::_pass = qi::_1 == 0xfeff,
-            qi::_val = hermit::json_utf16
-          ]|
-          qi::little_word[
-            qi::_pass = qi::_1 == 0xfeff,
-            qi::_val = hermit::json_utf16
-          ]|
-          qi::big_dword[
-            qi::_pass = qi::_1 <= 0x7F,
-            qi::_val = hermit::json_utf32be
-          ]|
-          qi::little_dword[
-            qi::_pass = qi::_1 <= 0x7F,
-            qi::_val = hermit::json_utf32le
-          ]|
-          qi::big_word[
-            qi::_pass = qi::_1 <= 0x7F,
-            qi::_val = hermit::json_utf16be
-          ]|
-          qi::little_word[
-            qi::_pass = qi::_1 <= 0x7F,
-            qi::_val = hermit::json_utf16le
-          ]|
-          qi::byte_[
-            qi::_pass = qi::_1 <= 0x7F,
-            qi::_val = hermit::json_utf8
+          namespace phx = boost::phoenix;
+          root = ( qi::byte_ >> qi::byte_ >> qi::byte_ >> qi::byte_ )[
+            phx::if_( qi::_1 == 0 )[
+              phx::if_( qi::_2 == 0 )[
+                phx::if_( qi::_3 == 0 )[
+                  qi::_val = hermit::json_utf32be
+                ].else_[
+                  qi::_val = hermit::json_utf32
+                ]
+              ].else_[
+                qi::_val = hermit::json_utf16be
+              ]
+            ].else_[
+              phx::if_( qi::_2 == 0 )[
+                phx::if_( qi::_3 == 0 )[
+                  qi::_val = hermit::json_utf32le
+                ].else_[
+                  qi::_val = hermit::json_utf16le
+                ]
+              ].else_[
+                phx::if_( qi::_3 == 0 )[
+                  phx::if_( qi::_4 == 0 )[
+                    qi::_val = hermit::json_utf32
+                  ].else_[
+                    qi::_val = hermit::json_utf16
+                  ]
+                ].else_[
+                  phx::if_( qi::_4 == 0 )[
+                    qi::_val = hermit::json_utf16
+                  ].else_[
+                    qi::_val = hermit::json_utf8
+                  ]
+                ]
+              ]
+            ]
           ];
         }
+      private:
         boost::spirit::qi::rule< Iterator, hermit::json_encoding_type() > root;
       };
 
@@ -78,35 +79,32 @@ namespace hermit {
         > {
       public:
         json() : json::base_type( root ) {
-          using namespace boost::spirit;
-          using namespace boost::spirit::ascii;
           namespace qi = boost::spirit::qi;
           namespace phx = boost::phoenix;
-          null_ = lit( "null" )[ _val = none_type() ];
-          root = object|array;
-          value_ = string_|double_|object|array|bool_|null_;
+          null_ = qi::lit( "null" )[ qi::_val = none_type() ];
+          root = qi::omit[ *qi::standard::space ] >> (object|array) >> qi::omit[ *qi::standard::space ];
+          value_ = string_|qi::double_|object|array|qi::bool_|null_;
           escape_sequence = '\\' >> (
-            char_( '"' )[ _val = '"' ] |
-            char_( '\\' )[ _val = '\\' ] |
-            char_( '/' )[ _val = '/' ] |
-            char_( 'b' )[ _val = '\b' ] |
-            char_( 'n' )[ _val = '\n' ] |
-            char_( 'f' )[ _val = '\f' ] |
-            char_( 'r' )[ _val = '\r' ] |
-            char_( 't' )[ _val = '\t' ] |
-            hex2_p[ _val = _1 ]
+            qi::standard::char_( '"' )[ qi::_val = '"' ] |
+            qi::standard::char_( '\\' )[ qi::_val = '\\' ] |
+            qi::standard::char_( '/' )[ qi::_val = '/' ] |
+            qi::standard::char_( 'b' )[ qi::_val = '\b' ] |
+            qi::standard::char_( 'n' )[ qi::_val = '\n' ] |
+            qi::standard::char_( 'f' )[ qi::_val = '\f' ] |
+            qi::standard::char_( 'r' )[ qi::_val = '\r' ] |
+            qi::standard::char_( 't' )[ qi::_val = '\t' ]
           );
           unicode_string = +(
             "\\u" >> hex2_p >> hex2_p
           )[
             phx::push_back( qi::_a, qi::_1 ),
             phx::push_back( qi::_a, qi::_2 )
-          ] >> eps[
+          ] >> qi::eps[
             qi::_val = phx::bind( &json::utf16_to_utf8, qi::_a, qi::_pass )
           ];
           string_ = '"' >> *( (
-            repeat(1)[
-              ( char_ - cntrl - '\\' - '"' )|
+            qi::repeat(1)[
+              ( qi::standard::char_ - qi::standard::cntrl - '\\' - '"' )|
               escape_sequence
             ] )[
               phx::insert(
@@ -123,9 +121,9 @@ namespace hermit {
                 phx::end( qi::_1 )
               )
             ] ) >> '"';
-          array = skip( blank )[ '[' >> -( value_ % ',' ) >>  ']' ];
-          named_value = skip( blank )[ ( string_ >> ':' >> value_ ) ];
-          object = skip( blank )[ '{' >> -( named_value % ',' ) >> '}' ];
+          array = qi::skip( qi::standard::space )[ '[' >> -( value_ % ',' ) >>  ']' ];
+          named_value = qi::skip( qi::standard::space )[ ( string_ >> ':' >> value_ ) ];
+          object = qi::skip( qi::standard::space )[ '{' >> -( named_value % ',' ) >> '}' ];
         } 
       private:
         static std::string utf16_to_utf8( const std::vector< uint8_t > &src, bool &_pass ) {

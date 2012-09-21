@@ -12,6 +12,7 @@
 namespace hermit {
 
   enum json_encoding_type {
+    json_unknown,
     json_utf8,
     json_utf16,
     json_utf32,
