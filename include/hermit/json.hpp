@@ -10,6 +10,17 @@
 #include <hermit/none_type.hpp>
 
 namespace hermit {
+
+  enum json_encoding_type {
+    json_utf8,
+    json_utf16,
+    json_utf32,
+    json_utf16be,
+    json_utf16le,
+    json_utf32be,
+    json_utf32le
+  };
+
   typedef boost::make_recursive_variant<
     std::string,
     double,

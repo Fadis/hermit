@@ -71,8 +71,8 @@ namespace hermit {
               ]
             ] );
             block = block_3|block_2|block_1;
-            line = karma::eps[ karma::_a = phx::begin( karma::_val ) ] <<
-            *block[
+            line = karma::eps[ karma::_a = phx::begin( karma::_val ), karma::_b = 1 ] <<
+            *( block[
               karma::_pass = karma::_a != phx::end( karma::_val ),
               phx::clear( karma::_1 ),
               phx::push_back( karma::_1, *( karma::_a++ ) ),
@@ -86,11 +86,14 @@ namespace hermit {
                   phx::push_back( karma::_1, *( karma::_a++ ) )
                 ]
               ]
-            ];
+            ] << -karma::eol[
+              karma::_pass = karma::_b % 19 == 0,
+              ++karma::_b
+            ] );
             root = line;
           }
         private:
-          boost::spirit::karma::rule< OutputIterator, std::vector< uint8_t >(), boost::spirit::karma::locals< std::vector< uint8_t >::const_iterator > > line;
+          boost::spirit::karma::rule< OutputIterator, std::vector< uint8_t >(), boost::spirit::karma::locals< std::vector< uint8_t >::const_iterator, size_t > > line;
           boost::spirit::karma::rule< OutputIterator, std::vector< uint8_t >() > block;
           boost::spirit::karma::rule< OutputIterator, std::vector< uint8_t >(), boost::spirit::karma::locals< uint32_t > > block_3;
           boost::spirit::karma::rule< OutputIterator, std::vector< uint8_t >(), boost::spirit::karma::locals< uint32_t > > block_2;

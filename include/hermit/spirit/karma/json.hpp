@@ -23,13 +23,17 @@ namespace hermit {
         public:
           json() : json::base_type( value_ ) {
             namespace karma = boost::spirit::karma;
+            namespace karma = boost::spirit::karma;
+            namespace phx = boost::phoenix;
             null_ = karma::string[ karma::_1 = boost::phoenix::val( "null" ) ];
             root = object|array;
             value_ = string_|karma::double_|object|array|karma::bool_|null_;
             escape_sequence.add( '"', "\\\"" )( '\\', "\\\\" )( '/', "\\/" )
                 ( '\b', "\\b" )( '\n', "\\n" )( '\f', "\\f" )
                 ( '\r', "\\r" )( '\t', "\\t" );
-            string_ = '"' << *( escape_sequence | karma::print | "\\" << karma::hex ) << '"';
+            string_ = '"' <<
+              *( escape_sequence | karma::byte_ )
+            << '"';
             array = '[' << -( value_ % ',' ) << ']';
             named_value = ( string_ << ':' << value_ );
             object = '{' << -( named_value % ',' ) << '}';
@@ -37,7 +41,7 @@ namespace hermit {
         private:
           boost::spirit::karma::rule< Iterator, hermit::json() > root;
           boost::spirit::karma::symbols<char, std::string> escape_sequence;
-          boost::spirit::karma::rule<Iterator, std::string()> string_;
+          boost::spirit::karma::rule<Iterator, std::string() > string_;
           boost::spirit::karma::rule< Iterator, none_type()> null_;
           boost::spirit::karma::rule< Iterator, hermit::json() > value_;
           boost::spirit::karma::rule< Iterator, std::vector< hermit::json >() > array;

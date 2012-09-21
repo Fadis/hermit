@@ -1,5 +1,5 @@
-#ifndef HERMIT_FORMAT_READ_UTF16_HPP
-#define HERMIT_FORMAT_READ_UTF16_HPP
+#ifndef HERMIT_FORMAT_READ_UTF32_HPP
+#define HERMIT_FORMAT_READ_UTF32_HPP
 
 #include <string>
 #include <boost/range.hpp>
@@ -8,7 +8,7 @@
 #include <boost/type_traits.hpp>
 #include <hermit/range_traits.hpp>
 #include <hermit/json.hpp>
-#include <hermit/spirit/qi/utf16.hpp>
+#include <hermit/spirit/qi/utf32.hpp>
 
 namespace hermit {
   namespace format {
@@ -25,10 +25,10 @@ namespace hermit {
         >
       >::type
     >
-    boost::optional< std::u32string > read_utf16le(
+    boost::optional< std::u32string > read_utf32le(
       const T &str
     ) {
-      hermit::spirit::qi::utf16lestring< typename range_iterator< const T >::type > grammar;
+      hermit::spirit::qi::utf32lestring< typename range_iterator< const T >::type > grammar;
       typename range_iterator< const T >::type iter = str.begin();
       std::u32string result;
       if( boost::spirit::qi::parse(iter, str.end(), grammar, result ) && iter == str.end() )
@@ -52,7 +52,7 @@ namespace hermit {
     boost::optional< std::u32string > read_utf16be(
       const T &str
     ) {
-      hermit::spirit::qi::utf16bestring< typename range_iterator< const T >::type > grammar;
+      hermit::spirit::qi::utf32bestring< typename range_iterator< const T >::type > grammar;
       typename range_iterator< const T >::type iter = str.begin();
       std::u32string result;
       if( boost::spirit::qi::parse(iter, str.end(), grammar, result ) && iter == str.end() )
@@ -73,10 +73,10 @@ namespace hermit {
         >
       >::type
     >
-    boost::optional< std::u32string > read_utf16(
+    boost::optional< std::u32string > read_utf32(
       const T &str
     ) {
-      hermit::spirit::qi::utf16string< typename range_iterator< const T >::type > grammar;
+      hermit::spirit::qi::utf32string< typename range_iterator< const T >::type > grammar;
       typename range_iterator< const T >::type iter = str.begin();
       std::u32string result;
       if( boost::spirit::qi::parse(iter, str.end(), grammar, result ) && iter == str.end() )

@@ -81,6 +81,17 @@ namespace hermit {
               boost::spirit::karma::rule< OutputIterator, uint32_t() > block5;
               boost::spirit::karma::rule< OutputIterator, char32_t() > root;
           };
+      template< typename OutputIterator >
+        class utf8string :
+          public boost::spirit::karma::grammar< OutputIterator, std::u32string() > {
+            public:
+              utf8string() : utf8string::base_type( root ) {
+                root = *utf8char;
+              }
+            private:
+              utf8< OutputIterator > utf8char;
+              boost::spirit::karma::rule< OutputIterator, std::u32string() > root;
+      };
     }
   }
 }

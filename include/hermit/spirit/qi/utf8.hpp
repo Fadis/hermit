@@ -82,6 +82,19 @@ namespace hermit {
               boost::spirit::qi::rule< InputIterator, uint8_t() > block5_head;
               boost::spirit::qi::rule< InputIterator, char32_t() > root;
       };
+
+      template <typename InputIterator>
+        class utf8string :
+          public boost::spirit::qi::grammar< InputIterator, std::u32string() > {
+            public:
+              utf8string() : utf8string::base_type( root ) {
+                root = *utf8char;
+              }
+            private:
+              utf8< InputIterator > utf8char;
+              boost::spirit::qi::rule< InputIterator, std::u32string() > root;
+      };
+    
     }
   }
 }

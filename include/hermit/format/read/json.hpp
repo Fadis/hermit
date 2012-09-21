@@ -28,6 +28,13 @@ namespace hermit {
     boost::optional< json > read_json(
       const T &str
     ) {
+      {
+        hermit::spirit::qi::json_encoding< typename range_iterator< const T >::type > encoding_detector;
+        typename range_iterator< const T >::type iter = str.begin();
+        hermit::json_encoding_type result;
+        boost::spirit::qi::parse(iter, str.end(), encoding_detector, result );
+        std::cout << result << std::endl;
+      }
       hermit::spirit::qi::json< typename range_iterator< const T >::type > grammar;
       typename range_iterator< const T >::type iter = str.begin();
       json result;
