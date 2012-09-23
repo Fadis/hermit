@@ -9,6 +9,7 @@ int main() {
   hermit::spirit::qi::uri< std::string::iterator > rule;
   auto iter = source.begin();
   if( boost::spirit::qi::parse( iter, source.end(), rule, uri ) && iter == source.end() ) {
+    std::cout << "scheme : " << uri.scheme << std::endl;
     if( uri.authority ) {
       hermit::authority authority = *uri.authority;
       std::cout << "userinfo : ";
@@ -26,6 +27,14 @@ int main() {
       if( authority.port )
         std::cout << "port : " << *authority.port << std::endl;
     }
+    std::cout << "path : " << ( uri.path.absolute ? "(absolute)" : "(relative)" );
+    for( const auto elem: uri.path.segments )
+      std::cout << '/' << elem;
+    std::cout << std::endl;
+    if( uri.query )
+      std::cout << "query : " << *uri.query << std::endl;
+    if( uri.fragment )
+      std::cout << "fragment : " << *uri.fragment << std::endl;
   }
 }
 

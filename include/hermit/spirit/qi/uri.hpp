@@ -6,7 +6,6 @@
 #include <string>
 #include <boost/spirit/include/qi.hpp>
 #include <boost/spirit/include/phoenix.hpp>
-#include <boost/filesystem/path.hpp>
 
 #include <hermit/ip.hpp>
 #include <hermit/uri.hpp>
@@ -108,53 +107,37 @@ namespace hermit {
         };
 
       template< typename Iterator, bool absolute, bool accept_empty >
-        class path : public boost::spirit::qi::grammar< Iterator, boost::filesystem::path() > {
+        class path : public boost::spirit::qi::grammar< Iterator, hermit::path() > {
           public:
             path() : path::base_type( root ) {
               namespace qi = boost::spirit::qi;
               namespace phx = boost::phoenix;
               if( absolute ) {
                 if( accept_empty )
-                  segs = *( '/' >> segment_ );
+                  root = ( *( '/' >> segment_ ) )[
+                    phx::at_c< 0 >( qi::_val ) = true,
+                    phx::insert( phx::at_c< 1 >( qi::_val ), phx::end( phx::at_c< 1 >( qi::_val ) ), phx::begin( qi::_1 ), phx::end( qi::_1 ) )
+                  ];
                 else
-                  segs = '/' >> ( segment_ >> *( '/' >> segment_ ) )[
-                      phx::push_back( qi::_val, qi::_1 ),
-                      phx::insert( qi::_val, phx::end( qi::_val ), phx::begin( qi::_2 ), phx::end( qi::_2 ) )
+                  root = '/' >> ( segment_ >> *( '/' >> segment_ ) )[
+                      phx::at_c< 0 >( qi::_val ) = true,
+                      phx::push_back( phx::at_c< 1 >( qi::_val ), qi::_1 ),
+                      phx::insert( phx::at_c< 1 >( qi::_val ), phx::end( phx::at_c< 1 >( qi::_val ) ), phx::begin( qi::_2 ), phx::end( qi::_2 ) )
                     ];
-                root = segs[ qi::_val = phx::bind( &path::create_absolute_path, qi::_1 ) ];
               }
               else {
-                segs = ( segment_nz >> *( '/' >> segment_ ) )[
-                    phx::push_back( qi::_val, qi::_1 ),
-                    phx::insert( qi::_val, phx::end( qi::_val ), phx::begin( qi::_2 ), phx::end( qi::_2 ) )
+                root = ( segment_nz >> *( '/' >> segment_ ) )[
+                    phx::at_c< 0 >( qi::_val ) = false,
+                    phx::push_back( phx::at_c< 1 >( qi::_val ), qi::_1 ),
+                    phx::insert( phx::at_c< 1 >( qi::_val ), phx::end( phx::at_c< 1 >( qi::_val ) ), phx::begin( qi::_2 ), phx::end( qi::_2 ) )
                   ];
-                root = segs[ qi::_val = phx::bind( &path::create_relative_path, qi::_1 ) ];
               }
             }
           private:
-            static boost::filesystem::path create_absolute_path( const std::vector< std::string > &segs ) {
-              boost::filesystem::path temp( "/" );
-              std::cout << "foo" << std::endl;
-              for( auto elem: segs ) {
-                std::cout << elem << std::endl;
-                temp /= elem;
-              }
-              std::cout << "bar" << std::endl;
-              return temp;
-            }
-            static boost::filesystem::path create_relative_path( const std::vector< std::string > &segs ) {
-              if( segs.empty() )
-                return boost::filesystem::path();
-              boost::filesystem::path temp( *segs.begin() );
-              for( auto iter = std::next( segs.begin() ); iter != segs.end(); ++iter )
-                temp /= *iter;
-              return temp;
-            }
             segment< Iterator, false, false > segment_;
             segment< Iterator, true, false > segment_nz;
             segment< Iterator, true, true > segment_nz_nc;
-            boost::spirit::qi::rule< Iterator, std::vector< std::string >() > segs;
-            boost::spirit::qi::rule< Iterator, boost::filesystem::path() > root;
+            boost::spirit::qi::rule< Iterator, hermit::path() > root;
       };
 
 
@@ -210,48 +193,42 @@ namespace hermit {
             boost::spirit::qi::rule< Iterator, std::string() > root;
         };
 
-  template< typename Iterator >
-    class uri : public boost::spirit::qi::grammar< Iterator, hermit::uri() > {
-      public:
-        uri() : uri::base_type( root ) {
-          namespace qi = boost::spirit::qi;
-          namespace phx = boost::phoenix;
-          hier_part = ( "//" >> authority_ >> path_abempty )|absolute_path_only|relative_path_only;
-          absolute_path_only = path_absolute[
-            phx::at_c< 0 >( qi::_val ) = boost::optional< hermit::authority >(),
-            phx::at_c< 1 >( qi::_val ) = qi::_1
-          ];
-          relative_path_only = path_rootless[
-            phx::at_c< 0 >( qi::_val ) = boost::optional< hermit::authority >(),
-            phx::at_c< 1 >( qi::_val ) = qi::_1
-          ];
-          root = ( scheme_ >> ':' >> hier_part >> -( '?' >> query_ ) >> -( '#' >> fragment_ ) )[
-            phx::at_c< 0 >( qi::_val ) = qi::_1,
-            phx::at_c< 1 >( qi::_val ) = phx::at_c< 0 >( qi::_2 ),
-            phx::at_c< 2 >( qi::_val ) = phx::at_c< 1 >( qi::_2 ),
-            phx::at_c< 3 >( qi::_val ) = qi::_3,
-            phx::at_c< 4 >( qi::_val ) = qi::_4
-          ];
-        }
-      private:
-        path< Iterator, true, true > path_abempty;
-        path< Iterator, true, false > path_absolute;
-        path< Iterator, false, false > path_rootless;
-        authority< Iterator > authority_;
-        scheme< Iterator > scheme_;
-        query< Iterator > query_;
-        fragment< Iterator > fragment_;
-        boost::spirit::qi::rule< Iterator, boost::fusion::vector< boost::optional< hermit::authority >, boost::filesystem::path >() > hier_part;
-        boost::spirit::qi::rule< Iterator, boost::fusion::vector< boost::optional< hermit::authority >, boost::filesystem::path >() > absolute_path_only;
-        boost::spirit::qi::rule< Iterator, boost::fusion::vector< boost::optional< hermit::authority >, boost::filesystem::path >() > relative_path_only;
-        boost::spirit::qi::rule< Iterator, hermit::uri() > root;
-    };
-
-
-
-
-
-
+      template< typename Iterator >
+        class uri : public boost::spirit::qi::grammar< Iterator, hermit::uri() > {
+          public:
+            uri() : uri::base_type( root ) {
+              namespace qi = boost::spirit::qi;
+              namespace phx = boost::phoenix;
+              hier_part = ( "//" >> authority_ >> path_abempty )|absolute_path_only|relative_path_only;
+              absolute_path_only = path_absolute[
+                phx::at_c< 0 >( qi::_val ) = boost::optional< hermit::authority >(),
+                phx::at_c< 1 >( qi::_val ) = qi::_1
+              ];
+              relative_path_only = path_rootless[
+                phx::at_c< 0 >( qi::_val ) = boost::optional< hermit::authority >(),
+                phx::at_c< 1 >( qi::_val ) = qi::_1
+              ];
+              root = ( scheme_ >> ':' >> hier_part >> -( '?' >> query_ ) >> -( '#' >> fragment_ ) )[
+                phx::at_c< 0 >( qi::_val ) = qi::_1,
+                phx::at_c< 1 >( qi::_val ) = phx::at_c< 0 >( qi::_2 ),
+                phx::at_c< 2 >( qi::_val ) = phx::at_c< 1 >( qi::_2 ),
+                phx::at_c< 3 >( qi::_val ) = qi::_3,
+                phx::at_c< 4 >( qi::_val ) = qi::_4
+              ];
+            }
+          private:
+            path< Iterator, true, true > path_abempty;
+            path< Iterator, true, false > path_absolute;
+            path< Iterator, false, false > path_rootless;
+            authority< Iterator > authority_;
+            scheme< Iterator > scheme_;
+            query< Iterator > query_;
+            fragment< Iterator > fragment_;
+            boost::spirit::qi::rule< Iterator, boost::fusion::vector< boost::optional< hermit::authority >, hermit::path >() > hier_part;
+            boost::spirit::qi::rule< Iterator, boost::fusion::vector< boost::optional< hermit::authority >, hermit::path >() > absolute_path_only;
+            boost::spirit::qi::rule< Iterator, boost::fusion::vector< boost::optional< hermit::authority >, hermit::path >() > relative_path_only;
+            boost::spirit::qi::rule< Iterator, hermit::uri() > root;
+        };
     }
   }
 }

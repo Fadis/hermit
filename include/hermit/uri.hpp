@@ -17,10 +17,14 @@ namespace hermit {
     hermit::host host;
     boost::optional< uint16_t > port;
   };
+  struct path {
+    bool absolute;
+    std::vector< std::string > segments;
+  };
   struct uri {
     std::string scheme;
-    boost::optional< authority > authority;
-    boost::filesystem::path path;
+    boost::optional< hermit::authority > authority;
+    hermit::path path;
     boost::optional< std::string > query;
     boost::optional< std::string > fragment;
   };
@@ -34,10 +38,16 @@ BOOST_FUSION_ADAPT_STRUCT(
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
+  hermit::path,
+  (bool, absolute)
+  (std::vector< std::string >, segments)
+)
+
+BOOST_FUSION_ADAPT_STRUCT(
   hermit::uri,
   (std::string, scheme)
   (boost::optional< hermit::authority >, authority)
-  (boost::filesystem::path, path)
+  (hermit::path, path)
   (boost::optional< std::string >, query)
   (boost::optional< std::string >, fragment)
 )
