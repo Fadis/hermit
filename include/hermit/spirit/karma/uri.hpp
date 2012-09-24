@@ -64,49 +64,46 @@ namespace hermit {
             boost::spirit::karma::rule< Iterator, std::string() > info;
             boost::spirit::karma::rule< Iterator, std::vector< std::string >() > root;
         };
-/*
+
       template< typename Iterator >
         class authority : public boost::spirit::karma::grammar< Iterator, hermit::authority() > {
           public:
             authority() : authority::base_type( root ) {
-              namespace karma = boost::spirit::karma;
-              opt_userinfo = -( userinfo_[ karma::_a = karma::_1 ] << '@' )[ karma::_val = karma::_a ];
-              root = ( opt_userinfo >> host_ >> -( ':' >> dec_p ) );
+              root = ( -( userinfo_ << '@' ) << host_ << -( ':' << dec_p ) );
             }
           private:
-            boost::spirit::qi::uint_parser<uint16_t, 10, 1, 5> dec5_p;
+            boost::spirit::karma::uint_generator<uint16_t, 10> dec_p;
             userinfo< Iterator > userinfo_;
-            boost::spirit::qi::rule< Iterator, std::vector< std::string >(), boost::spirit::qi::locals< std::vector< std::string > > > opt_userinfo;
             host< Iterator > host_;
-            boost::spirit::qi::rule< Iterator, hermit::authority() > root;
+            boost::spirit::karma::rule< Iterator, hermit::authority() > root;
         };
 
       template< typename Iterator, bool nz, bool nc >
-        class segment : public boost::spirit::qi::grammar< Iterator, std::string() > {
+        class segment : public boost::spirit::karma::grammar< Iterator, std::string() > {
           public:
             segment() : segment::base_type( root ) {
-              namespace qi = boost::spirit::qi;
-              sub_delims = qi::char_("!$&'()*+,;=");
-              unreserved = qi::alnum | qi::char_("-._~");
-              pct_encoded = '%' >> hex2_p;
+              namespace karma = boost::spirit::karma;
+              sub_delims = karma::standard::char_("!$&'()*+,;=");
+              unreserved = karma::standard::alnum | karma::standard::char_("-._~");
+              pct_encoded = '%' << hex_p;
               if( nc )
-                pchar = sub_delims|unreserved|pct_encoded|qi::char_("@");
+                pchar = sub_delims|unreserved|pct_encoded|karma::standard::char_("@");
               else
-                pchar = sub_delims|unreserved|pct_encoded|qi::char_(":@");
+                pchar = sub_delims|unreserved|pct_encoded|karma::standard::char_(":@");
               if( nz )
                 root = +pchar;
               else
                 root = *pchar;
             }
           private:
-            boost::spirit::qi::uint_parser<uint8_t, 16, 2, 2> hex2_p;
-            boost::spirit::qi::rule< Iterator, char() > sub_delims; 
-            boost::spirit::qi::rule< Iterator, char() > unreserved; 
-            boost::spirit::qi::rule< Iterator, char() > pct_encoded; 
-            boost::spirit::qi::rule< Iterator, char() > pchar; 
-            boost::spirit::qi::rule< Iterator, std::string() > root; 
+            boost::spirit::karma::uint_generator<uint8_t, 16> hex_p;
+            boost::spirit::karma::rule< Iterator, char() > sub_delims; 
+            boost::spirit::karma::rule< Iterator, char() > unreserved; 
+            boost::spirit::karma::rule< Iterator, char() > pct_encoded; 
+            boost::spirit::karma::rule< Iterator, char() > pchar; 
+            boost::spirit::karma::rule< Iterator, std::string() > root; 
         };
-
+/*
       template< typename Iterator, bool absolute, bool accept_empty >
         class path : public boost::spirit::qi::grammar< Iterator, hermit::path() > {
           public:
