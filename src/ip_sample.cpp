@@ -1,17 +1,17 @@
 #include <hermit/ip.hpp>
+#include <hermit/spirit/qi/ipv6.hpp>
+
 
 int main() {
-
-hermit::ip_segment< 128 > segment;
-  std::cin >> segment;
-hermit::ip< 128 > address;
+  std::string address;
   std::cin >> address;
-if( segment.contains( address ) )
-  std::cout << "foo" << std::endl;
-/*
-hermit::mpint hoge;
-  std::cin >> hoge;
-  std::cout << static_cast< uint32_t >( hoge ) << std::endl;
-*/
+  hermit::ipv6 result;
+  {
+    hermit::spirit::qi::ipv6< std::string::iterator > rule;
+    auto iter = address.begin();
+    if( boost::spirit::qi::parse( iter, address.end(), rule, result ) && iter == address.end() ) {
+      std::cout << std::hex << result.first << " " << result.second << std::endl;
+    }
+  }
 }
 

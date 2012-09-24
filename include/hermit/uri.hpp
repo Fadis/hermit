@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <cstdint>
 #include <boost/optional.hpp>
 #include <boost/variant.hpp>
 #include <boost/fusion/adapted/struct/adapt_struct.hpp>

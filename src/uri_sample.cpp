@@ -12,15 +12,17 @@ int main() {
     std::cout << "scheme : " << uri.scheme << std::endl;
     if( uri.authority ) {
       hermit::authority authority = *uri.authority;
-      std::cout << "userinfo : ";
-      for( const auto &elem: authority.userinfo )
-        std::cout << elem << " ";
-      std::cout << std::endl;
+      if( !authority.userinfo.empty() ) {
+        std::cout << "userinfo : ";
+        for( const auto &elem: authority.userinfo )
+          std::cout << elem << " ";
+        std::cout << std::endl;
+      }
       std::cout << "host : ";
       if( authority.host.which() == 0 )
         std::cout << boost::get< hermit::ipv4 >( authority.host );
       else if( authority.host.which() == 1 )
-        std::cout << boost::get< hermit::ipv6 >( authority.host );
+        std::cout << boost::get< hermit::ipv6 >( authority.host ).first << "," << boost::get< hermit::ipv6 >( authority.host ).second;
       else if( authority.host.which() == 2 )
         std::cout << boost::get< std::string >( authority.host );
       std::cout << std::endl;

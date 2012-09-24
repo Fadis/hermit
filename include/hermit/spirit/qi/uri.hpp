@@ -7,7 +7,8 @@
 #include <boost/spirit/include/qi.hpp>
 #include <boost/spirit/include/phoenix.hpp>
 
-#include <hermit/ip.hpp>
+#include <hermit/spirit/qi/ipv4.hpp>
+#include <hermit/spirit/qi/ipv6.hpp>
 #include <hermit/uri.hpp>
 
 namespace hermit {
@@ -38,8 +39,8 @@ namespace hermit {
               root = ipv4address|( '[' >> ipv6address >> ']' )|hostname;
             }
           private:
-            ipv4_parser< Iterator > ipv4address;
-            ipv6_parser< Iterator > ipv6address;
+            ipv4< Iterator > ipv4address;
+            ipv6< Iterator > ipv6address;
             reg_name< Iterator > hostname;
             boost::spirit::qi::rule< Iterator, hermit::host() > root;
         };
