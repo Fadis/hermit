@@ -1,6 +1,7 @@
 #include <string>
 #include <iostream>
 #include <hermit/spirit/qi/uri.hpp>
+#include <hermit/spirit/karma/uri.hpp>
 
 int main() {
   std::string source;
