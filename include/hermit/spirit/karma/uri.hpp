@@ -103,115 +103,104 @@ namespace hermit {
             boost::spirit::karma::rule< Iterator, char() > pchar; 
             boost::spirit::karma::rule< Iterator, std::string() > root; 
         };
-/*
+
       template< typename Iterator, bool absolute, bool accept_empty >
-        class path : public boost::spirit::qi::grammar< Iterator, hermit::path() > {
+        class path : public boost::spirit::karma::grammar< Iterator, hermit::path() > {
           public:
             path() : path::base_type( root ) {
-              namespace qi = boost::spirit::qi;
+              namespace karma = boost::spirit::karma;
               namespace phx = boost::phoenix;
               if( absolute ) {
                 if( accept_empty )
-                  root = ( *( '/' >> segment_ ) )[
-                    phx::at_c< 0 >( qi::_val ) = true,
-                    phx::insert( phx::at_c< 1 >( qi::_val ), phx::end( phx::at_c< 1 >( qi::_val ) ), phx::begin( qi::_1 ), phx::end( qi::_1 ) )
+                  root = ( *( '/' << segment_ ) )[
+                    karma::_pass = phx::at_c< 0 >( karma::_val ) == true,
+                    karma::_1 = phx::at_c< 1 >( karma::_val )
                   ];
                 else
-                  root = '/' >> ( segment_ >> *( '/' >> segment_ ) )[
-                      phx::at_c< 0 >( qi::_val ) = true,
-                      phx::push_back( phx::at_c< 1 >( qi::_val ), qi::_1 ),
-                      phx::insert( phx::at_c< 1 >( qi::_val ), phx::end( phx::at_c< 1 >( qi::_val ) ), phx::begin( qi::_2 ), phx::end( qi::_2 ) )
-                    ];
+                  root = ( *( '/' << segment_ ) )[
+                    karma::_pass = phx::at_c< 0 >( karma::_val ) == true &&
+                      phx::size( phx::at_c< 1 >( karma::_val ) ) > 0ul,
+                    karma::_1 = phx::at_c< 1 >( karma::_val )
+                  ];
               }
               else {
-                root = ( segment_nz >> *( '/' >> segment_ ) )[
-                    phx::at_c< 0 >( qi::_val ) = false,
-                    phx::push_back( phx::at_c< 1 >( qi::_val ), qi::_1 ),
-                    phx::insert( phx::at_c< 1 >( qi::_val ), phx::end( phx::at_c< 1 >( qi::_val ) ), phx::begin( qi::_2 ), phx::end( qi::_2 ) )
-                  ];
+                root = ( segment_ % '/' )[
+                  karma::_pass = phx::at_c< 0 >( karma::_val ) == false &&
+                    phx::size( phx::at_c< 1 >( karma::_val ) ) > 0ul &&
+                    phx::size( phx::at( phx::at_c< 1 >( karma::_val ), 0 ) ) > 0ul,
+                  karma::_1 = phx::at_c< 1 >( karma::_val )
+                ];
               }
             }
           private:
             segment< Iterator, false, false > segment_;
-            segment< Iterator, true, false > segment_nz;
-            segment< Iterator, true, true > segment_nz_nc;
-            boost::spirit::qi::rule< Iterator, hermit::path() > root;
+            boost::spirit::karma::rule< Iterator, hermit::path() > root;
       };
 
-
       template< typename Iterator >
-        class query : public boost::spirit::qi::grammar< Iterator, std::string() > {
+        class query : public boost::spirit::karma::grammar< Iterator, std::string() > {
           public:
             query() : query::base_type( root ) {
-              namespace qi = boost::spirit::qi;
+              namespace karma = boost::spirit::karma;
               namespace phx = boost::phoenix;
-              sub_delims = qi::standard::char_("!$&'()*+,;=");
-              unreserved = qi::standard::alnum | qi::standard::char_("-._~");
-              pct_encoded = '%' >> hex2_p;
-              pchar = sub_delims|unreserved|pct_encoded|qi::standard::char_(":@");
-              root = *( pchar | qi::standard::char_("/?") );
+              sub_delims = karma::standard::char_("!$&'()*+,;=");
+              unreserved = karma::standard::alnum | karma::standard::char_("-._~");
+              pct_encoded = '%' << hex_p;
+              pchar = sub_delims|unreserved|pct_encoded|karma::standard::char_(":@");
+              root = *( pchar | karma::standard::char_("/?") );
             }
           private:
-            boost::spirit::qi::uint_parser<uint8_t, 16, 2, 2> hex2_p;
-            boost::spirit::qi::rule< Iterator, char() > sub_delims;
-            boost::spirit::qi::rule< Iterator, char() > unreserved;
-            boost::spirit::qi::rule< Iterator, char() > pct_encoded;
-            boost::spirit::qi::rule< Iterator, char() > pchar;
-            boost::spirit::qi::rule< Iterator, std::string() > root;
+            boost::spirit::karma::uint_generator<uint8_t, 16> hex_p;
+            boost::spirit::karma::rule< Iterator, char() > sub_delims;
+            boost::spirit::karma::rule< Iterator, char() > unreserved;
+            boost::spirit::karma::rule< Iterator, char() > pct_encoded;
+            boost::spirit::karma::rule< Iterator, char() > pchar;
+            boost::spirit::karma::rule< Iterator, std::string() > root;
         };
 
       template< typename Iterator >
-        class fragment : public boost::spirit::qi::grammar< Iterator, std::string() > {
+        class fragment : public boost::spirit::karma::grammar< Iterator, std::string() > {
           public:
             fragment() : fragment::base_type( root ) {
-              namespace qi = boost::spirit::qi;
-              sub_delims = qi::standard::char_("!$&'()*+,;=");
-              unreserved = qi::standard::alnum | qi::standard::char_("-._~");
-              pct_encoded = '%' >> hex2_p;
-              pchar = sub_delims|unreserved|pct_encoded|qi::standard::char_(":@");
-              root = *( pchar | qi::standard::char_("/?") );
+              namespace karma = boost::spirit::karma;
+              sub_delims = karma::standard::char_("!$&'()*+,;=");
+              unreserved = karma::standard::alnum | karma::standard::char_("-._~");
+              pct_encoded = '%' << hex_p;
+              pchar = sub_delims|unreserved|pct_encoded|karma::standard::char_(":@");
+              root = *( pchar | karma::standard::char_("/?") );
             }
           private:
-            boost::spirit::qi::uint_parser<uint8_t, 16, 2, 2> hex2_p;
-            boost::spirit::qi::rule< Iterator, char() > sub_delims;
-            boost::spirit::qi::rule< Iterator, char() > unreserved;
-            boost::spirit::qi::rule< Iterator, char() > pct_encoded;
-            boost::spirit::qi::rule< Iterator, char() > pchar;
-            boost::spirit::qi::rule< Iterator, std::string() > root;
+            boost::spirit::karma::uint_generator<uint8_t, 16> hex_p;
+            boost::spirit::karma::rule< Iterator, char() > sub_delims;
+            boost::spirit::karma::rule< Iterator, char() > unreserved;
+            boost::spirit::karma::rule< Iterator, char() > pct_encoded;
+            boost::spirit::karma::rule< Iterator, char() > pchar;
+            boost::spirit::karma::rule< Iterator, std::string() > root;
         };
 
       template< typename Iterator >
-        class scheme : public boost::spirit::qi::grammar< Iterator, std::string() > {
+        class scheme : public boost::spirit::karma::grammar< Iterator, std::string() > {
           public:
             scheme() : scheme::base_type( root ) {
-              namespace qi = boost::spirit::qi;
-              root = +( qi::standard::alnum|qi::standard::char_("+-.") );
+              namespace karma = boost::spirit::karma;
+              root = +( karma::standard::alnum|karma::standard::char_("+-.") );
             }
           private:
-            boost::spirit::qi::rule< Iterator, std::string() > root;
+            boost::spirit::karma::rule< Iterator, std::string() > root;
         };
 
       template< typename Iterator >
-        class uri : public boost::spirit::qi::grammar< Iterator, hermit::uri() > {
+        class uri : public boost::spirit::karma::grammar< Iterator, hermit::uri() > {
           public:
             uri() : uri::base_type( root ) {
-              namespace qi = boost::spirit::qi;
+              namespace karma = boost::spirit::karma;
               namespace phx = boost::phoenix;
-              hier_part = ( "//" >> authority_ >> path_abempty )|absolute_path_only|relative_path_only;
-              absolute_path_only = path_absolute[
-                phx::at_c< 0 >( qi::_val ) = boost::optional< hermit::authority >(),
-                phx::at_c< 1 >( qi::_val ) = qi::_1
-              ];
-              relative_path_only = path_rootless[
-                phx::at_c< 0 >( qi::_val ) = boost::optional< hermit::authority >(),
-                phx::at_c< 1 >( qi::_val ) = qi::_1
-              ];
-              root = ( scheme_ >> ':' >> hier_part >> -( '?' >> query_ ) >> -( '#' >> fragment_ ) )[
-                phx::at_c< 0 >( qi::_val ) = qi::_1,
-                phx::at_c< 1 >( qi::_val ) = phx::at_c< 0 >( qi::_2 ),
-                phx::at_c< 2 >( qi::_val ) = phx::at_c< 1 >( qi::_2 ),
-                phx::at_c< 3 >( qi::_val ) = qi::_3,
-                phx::at_c< 4 >( qi::_val ) = qi::_4
+              hier_part = -( "//" << authority_ ) << (path_absolute|path_rootless|path_abempty);
+              root = ( scheme_ << ':' << hier_part << -( '?' << query_ ) << -( '#' << fragment_ ) )[
+                karma::_1 = phx::at_c< 0 >( karma::_val ),
+                karma::_2 = phx::construct< boost::fusion::vector< boost::optional< hermit::authority >, hermit::path > >( phx::at_c< 1 >( karma::_val ), phx::at_c< 2 >( karma::_val ) ),
+                karma::_3 = phx::at_c< 3 >( karma::_val ),
+                karma::_4 = phx::at_c< 4 >( karma::_val )
               ];
             }
           private:
@@ -222,12 +211,9 @@ namespace hermit {
             scheme< Iterator > scheme_;
             query< Iterator > query_;
             fragment< Iterator > fragment_;
-            boost::spirit::qi::rule< Iterator, boost::fusion::vector< boost::optional< hermit::authority >, hermit::path >() > hier_part;
-            boost::spirit::qi::rule< Iterator, boost::fusion::vector< boost::optional< hermit::authority >, hermit::path >() > absolute_path_only;
-            boost::spirit::qi::rule< Iterator, boost::fusion::vector< boost::optional< hermit::authority >, hermit::path >() > relative_path_only;
-            boost::spirit::qi::rule< Iterator, hermit::uri() > root;
+            boost::spirit::karma::rule< Iterator, boost::fusion::vector< boost::optional< hermit::authority >, hermit::path >() > hier_part;
+            boost::spirit::karma::rule< Iterator, hermit::uri() > root;
         };
-*/
     }
   }
 }

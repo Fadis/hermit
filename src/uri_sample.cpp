@@ -29,6 +29,13 @@ int main() {
       std::cout << std::endl;
       if( authority.port )
         std::cout << "port : " << *authority.port << std::endl;
+      {
+        typedef std::back_insert_iterator<std::string> sink_type;
+        hermit::spirit::karma::authority< sink_type > rrule;
+        std::string encoded;
+        boost::spirit::karma::generate( sink_type( encoded ), rrule, authority );
+        std::cout << "authority : " << encoded << std::endl;
+      }
     }
     std::cout << "path : " << ( uri.path.absolute ? "(absolute)" : "(relative)" );
     for( const auto elem: uri.path.segments )
@@ -38,8 +45,13 @@ int main() {
       std::cout << "query : " << *uri.query << std::endl;
     if( uri.fragment )
       std::cout << "fragment : " << *uri.fragment << std::endl;
+    {
+      typedef std::back_insert_iterator<std::string> sink_type;
+      hermit::spirit::karma::uri< sink_type > rrule;
+      std::string encoded;
+      boost::spirit::karma::generate( sink_type( encoded ), rrule, uri );
+      std::cout << "uri : " << encoded << std::endl;
+    }
   }
-  typedef std::back_insert_iterator<std::string> sink_type;
-  hermit::spirit::karma::authority< sink_type > rrule;
 }
 
