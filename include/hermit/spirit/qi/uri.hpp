@@ -90,9 +90,9 @@ namespace hermit {
               unreserved = qi::alnum | qi::char_("-._~");
               pct_encoded = '%' >> hex2_p;
               if( nc )
-                pchar = sub_delims|unreserved|pct_encoded|qi::char_("@");
+                pchar = sub_delims|unreserved|qi::standard::char_("@")|pct_encoded;
               else
-                pchar = sub_delims|unreserved|pct_encoded|qi::char_(":@");
+                pchar = sub_delims|unreserved|qi::standard::char_(":@")|pct_encoded;
               if( nz )
                 root = +pchar;
               else

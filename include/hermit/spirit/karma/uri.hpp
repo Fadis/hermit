@@ -87,9 +87,9 @@ namespace hermit {
               unreserved = karma::standard::alnum | karma::standard::char_("-._~");
               pct_encoded = '%' << hex_p;
               if( nc )
-                pchar = sub_delims|unreserved|pct_encoded|karma::standard::char_("@");
+                pchar = sub_delims|unreserved|karma::standard::char_("@")|pct_encoded;
               else
-                pchar = sub_delims|unreserved|pct_encoded|karma::standard::char_(":@");
+                pchar = sub_delims|unreserved|karma::standard::char_(":@")|pct_encoded;
               if( nz )
                 root = +pchar;
               else
