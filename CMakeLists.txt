@@ -7,16 +7,30 @@ INCLUDE (CheckIncludeFiles)
 include (FindPkgConfig)
 include(CheckCXXSourceCompiles)
 
+if (CMAKE_CXX_COMPILER MATCHES ".*clang")
+  set(CMAKE_COMPILER_IS_CLANGXX 1)
+endif ()
+
 # build type
 set(CMAKE_BUILD_TYPE Debug)
 
 # compile option (Debug) 
-set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -Wextra -Werror -std=c++0x")
-set(CMAKE_C_FLAGS_DEBUG "-g -Wall -Wextra -Werror")
+if (CMAKE_COMPILER_IS_CLANGXX)
+  set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -Wextra -Wno-unused-parameter -Werror -std=c++0x")
+  set(CMAKE_C_FLAGS_DEBUG "-g -Wall -Wextra -Wno-unused-parameter -Werror")
+else()
+  set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -Wextra -Werror -std=c++0x")
+  set(CMAKE_C_FLAGS_DEBUG "-g -Wall -Wextra -Werror")
+endif()
 
 # compile option (Release)
-set(CMAKE_CXX_FLAGS_RELEASE "-W -Wall -O3 -std=c++0x")
-set(CMAKE_C_FLAGS_RELEASE "-W -Wall -O3")
+if (CMAKE_COMPILER_IS_CLANGXX)
+  set(CMAKE_CXX_FLAGS_DEBUG "-W -Wall -Wextra -Wno-unused-parameter -Werror -std=c++0x -O3")
+  set(CMAKE_C_FLAGS_DEBUG "-W -Wall -Wextra -Wno-unused-parameter -Werror -O3")
+else()
+  set(CMAKE_CXX_FLAGS_DEBUG "-W -Wall -Wextra -Werror -std=c++0x -O3")
+  set(CMAKE_C_FLAGS_DEBUG "-W -Wall -Wextra -Werror -O3")
+endif()
 
 #if you don't want the full compiler output, remove the following line
 set(CMAKE_VERBOSE_MAKEFILE ON)
