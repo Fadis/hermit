@@ -32,7 +32,7 @@ namespace hermit {
               ( 56, '4' )( 57, '5' )( 58, '6' )( 59, '7' )( 60, '8' )
               ( 61, '9' )( 62, '+' )( 63, '/' );
             block_3 = ( ( base64alpha << base64alpha << base64alpha << base64alpha )[
-              phx::if_( phx::size( karma::_val ) == 3 )[
+              phx::if_( phx::size( karma::_val ) == 3ul )[
                 karma::_pass = true,
                 karma::_a =
                   ( phx::static_cast_<uint32_t>( phx::at( karma::_val, 0 ) ) << 16 )|
@@ -47,7 +47,7 @@ namespace hermit {
               ]
             ] );
             block_2 = ( ( base64alpha << base64alpha << base64alpha << '=' )[
-              phx::if_( phx::size( karma::_val ) == 2 )[
+              phx::if_( phx::size( karma::_val ) == 2ul )[
                 karma::_pass = true,
                 karma::_a =
                   ( phx::static_cast_<uint32_t>( phx::at( karma::_val, 0 ) ) << 16 )|
@@ -60,7 +60,7 @@ namespace hermit {
               ]
             ] );
             block_1 = ( ( base64alpha << base64alpha << '=' << '=' )[
-              phx::if_( phx::size( karma::_val ) == 1 )[
+              phx::if_( phx::size( karma::_val ) == 1ul )[
                 karma::_pass = true,
                 karma::_a =
                   ( phx::static_cast_<uint32_t>( phx::at( karma::_val, 0 ) ) << 16 ),
@@ -71,7 +71,7 @@ namespace hermit {
               ]
             ] );
             block = block_3|block_2|block_1;
-            line = karma::eps[ karma::_a = phx::begin( karma::_val ), karma::_b = 1 ] <<
+            line = karma::eps[ karma::_a = phx::begin( karma::_val ), karma::_b = 1ul ] <<
             *( block[
               karma::_pass = karma::_a != phx::end( karma::_val ),
               phx::clear( karma::_1 ),
@@ -87,7 +87,7 @@ namespace hermit {
                 ]
               ]
             ] << -karma::eol[
-              karma::_pass = karma::_b % 19 == 0,
+              karma::_pass = karma::_b % 19ul == 0ul,
               ++karma::_b
             ] );
             root = line;

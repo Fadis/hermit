@@ -48,27 +48,27 @@ namespace hermit {
                   karma::_6 = 0x80|( ( karma::_val ) & 0x3F )
                     ];
                 root = ascii_[
-                  karma::_pass = karma::_val <= 0x7F,
+                  karma::_pass = karma::_val <= 0x7Ful,
                   karma::_1 = karma::_val
                     ]|
                     block1[
-                    karma::_pass = karma::_val <= 0x7FF,
+                    karma::_pass = karma::_val <= 0x7FFul,
                   karma::_1 = karma::_val
                     ]|
                     block2[
-                    karma::_pass = karma::_val <= 0xFFFF,
+                    karma::_pass = karma::_val <= 0xFFFFul,
                   karma::_1 = karma::_val
                     ]|
                     block3[
-                    karma::_pass = karma::_val <= 0x1FFFFF,
+                    karma::_pass = karma::_val <= 0x1FFFFFul,
                   karma::_1 = karma::_val
                     ]|
                     block4[
-                    karma::_pass = karma::_val <= 0x3FFFFFF,
+                    karma::_pass = karma::_val <= 0x3FFFFFFul,
                   karma::_1 = karma::_val
                     ]|
                     block5[
-                    karma::_pass = karma::_val <= 0x7FFFFFFF,
+                    karma::_pass = karma::_val <= 0x7FFFFFFFul,
                   karma::_1 = karma::_val
                     ];
               }

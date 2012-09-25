@@ -17,12 +17,12 @@ namespace hermit {
               utf16be() : utf16be::base_type( root ) {
                 namespace karma = boost::spirit::karma;
                 surrogate_pairs = ( karma::big_word << karma::big_word )[
-                  karma::_pass = karma::_val > 0xFFFF && karma::_val <= 0x10FFFF,
+                  karma::_pass = karma::_val > 0xFFFFul && karma::_val <= 0x10FFFFul,
                   karma::_1 = 0xD800|( ( ( karma::_val - 0x10000 ) >> 10 ) & 0x03FF ),
                   karma::_2 = 0xDC00|( karma::_val & 0x03FF )
                 ];
                 single_word = karma::big_word[
-                  karma::_pass = karma::_val <= 0xFFFF,
+                  karma::_pass = karma::_val <= 0xFFFFul,
                   karma::_1 = karma::_val
                 ];
                 root = surrogate_pairs|single_word;
@@ -39,12 +39,12 @@ namespace hermit {
               utf16le() : utf16le::base_type( root ) {
                 namespace karma = boost::spirit::karma;
                 surrogate_pairs = ( karma::little_word << karma::little_word )[
-                  karma::_pass = karma::_val > 0xFFFF && karma::_val <= 0x10FFFF,
-                  karma::_1 = 0xD800|( ( ( karma::_val - 0x10000 ) >> 10 ) & 0x03FF ),
-                  karma::_2 = 0xDC00|( karma::_val & 0x03FF )
+                  karma::_pass = karma::_val > 0xFFFFul && karma::_val <= 0x10FFFFul,
+                  karma::_1 = 0xD800|( ( ( karma::_val - 0x10000ul ) >> 10 ) & 0x03FFul ),
+                  karma::_2 = 0xDC00|( karma::_val & 0x03FFul )
                 ];
                 single_word = karma::little_word[
-                  karma::_pass = karma::_val <= 0xFFFF,
+                  karma::_pass = karma::_val <= 0xFFFFul,
                   karma::_1 = karma::_val
                 ];
                 root = surrogate_pairs|single_word;

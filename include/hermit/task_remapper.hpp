@@ -87,7 +87,7 @@ namespace hermit {
     public:
       task_remapper( size_t size ) {
         work.reset( new boost::asio::io_service::work( task_queue ) );
-        for( int count = 0; count != size; ++count ) {
+        for( size_t count = 0; count != size; ++count ) {
 #ifdef BOOST_NO_0X_HDR_FUTURE
           end_sync.create_thread( std::bind( &task_remapper::run, this ) );
 #else

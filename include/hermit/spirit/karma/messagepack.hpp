@@ -58,13 +58,13 @@ namespace hermit {
           float_ = karma::byte_( 0xca ) << karma::big_bin_float;
           double_ = karma::byte_( 0xcb ) << karma::big_bin_double;
           raw_short = karma::byte_[
-            karma::_pass = boost::phoenix::size( karma::_val ) <= 0x1F,
+            karma::_pass = boost::phoenix::size( karma::_val ) <= 0x1Ful,
             karma::_1 = 0xA0|boost::phoenix::size( karma::_val )
           ] << karma::repeat( boost::phoenix::size( karma::_val ) )[ karma::byte_ ][
             karma::_1 = karma::_val
           ];
           raw_16 = ( karma::byte_( 0xda ) << karma::big_word )[
-            karma::_pass = boost::phoenix::size( karma::_val ) <= 0xFFFF,
+            karma::_pass = boost::phoenix::size( karma::_val ) <= 0xFFFFul,
             karma::_1 = boost::phoenix::size( karma::_val )
           ] << karma::repeat( boost::phoenix::size( karma::_val ) )[ karma::byte_ ][
             karma::_1 = karma::_val
@@ -77,13 +77,13 @@ namespace hermit {
           ];
           raw = raw_short|raw_16|raw_32;
           array_short = karma::byte_[
-            karma::_pass = boost::phoenix::size( karma::_val ) <= 0x0F,
+            karma::_pass = boost::phoenix::size( karma::_val ) <= 0x0Ful,
             karma::_1 = 0x90|boost::phoenix::size( karma::_val )
           ] << karma::repeat( boost::phoenix::size( karma::_val ) )[ value_ ][
             karma::_1 = karma::_val
           ];
           array_16 = ( karma::byte_( 0xdc ) << karma::big_word )[
-            karma::_pass = boost::phoenix::size( karma::_val ) <= 0xFFFF,
+            karma::_pass = boost::phoenix::size( karma::_val ) <= 0xFFFFul,
             karma::_1 = boost::phoenix::size( karma::_val )
           ] << karma::repeat( boost::phoenix::size( karma::_val ) )[ value_ ][
             karma::_1 = karma::_val
@@ -97,11 +97,11 @@ namespace hermit {
           array = array_short|array_16|array_32;
           named_value = value_ << value_;
           map_short = karma::byte_[
-            karma::_pass = boost::phoenix::size( karma::_val ) <= 0x0F,
+            karma::_pass = boost::phoenix::size( karma::_val ) <= 0x0Ful,
             karma::_1 = 0x80|boost::phoenix::size( karma::_val )
           ];
           map_16 = ( karma::byte_( 0xde ) << karma::big_word )[
-            karma::_pass = boost::phoenix::size( karma::_val ) <= 0xFFFF,
+            karma::_pass = boost::phoenix::size( karma::_val ) <= 0xFFFFul,
             karma::_1 = boost::phoenix::size( karma::_val )
           ];
           map_32 = ( karma::byte_( 0xdf ) << karma::big_word )[

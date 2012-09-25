@@ -1,6 +1,7 @@
 #ifndef HERMIT_SPIRIT_KARMA_IPV6_HPP
 #define HERMIT_SPIRIT_KARMA_IPV6_HPP
 
+#include <cstdint>
 #include <utility>
 #include <boost/spirit/include/karma.hpp>
 #include <boost/spirit/include/phoenix.hpp>
@@ -23,13 +24,13 @@ namespace hermit {
           namespace phx = boost::phoenix;
           root = ( hex_p << ':' << hex_p << ':' << hex_p << ':' << hex_p << ':' <<
                    hex_p << ':' << hex_p << ':' << hex_p << ':' << hex_p )[
-            karma::_1 = phx::static_cast_< uint16_t >( phx::at_c< 0 >( karma::_val ) >> 48 ),
-            karma::_2 = phx::static_cast_< uint16_t >( phx::at_c< 0 >( karma::_val ) >> 32 ),
-            karma::_3 = phx::static_cast_< uint16_t >( phx::at_c< 0 >( karma::_val ) >> 16 ),
+            karma::_1 = phx::static_cast_< uint16_t >( phx::at_c< 0 >( karma::_val ) / 0x1000000000000ull ),
+            karma::_2 = phx::static_cast_< uint16_t >( phx::at_c< 0 >( karma::_val ) / 0x100000000ull ),
+            karma::_3 = phx::static_cast_< uint16_t >( phx::at_c< 0 >( karma::_val ) / 0x10000ull ),
             karma::_4 = phx::static_cast_< uint16_t >( phx::at_c< 0 >( karma::_val ) ),
-            karma::_5 = phx::static_cast_< uint16_t >( phx::at_c< 1 >( karma::_val ) >> 48 ),
-            karma::_6 = phx::static_cast_< uint16_t >( phx::at_c< 1 >( karma::_val ) >> 32 ),
-            karma::_7 = phx::static_cast_< uint16_t >( phx::at_c< 1 >( karma::_val ) >> 16 ),
+            karma::_5 = phx::static_cast_< uint16_t >( phx::at_c< 1 >( karma::_val ) / 0x1000000000000ull ),
+            karma::_6 = phx::static_cast_< uint16_t >( phx::at_c< 1 >( karma::_val ) / 0x100000000ull ),
+            karma::_7 = phx::static_cast_< uint16_t >( phx::at_c< 1 >( karma::_val ) / 0x10000ull ),
             karma::_8 = phx::static_cast_< uint16_t >( phx::at_c< 1 >( karma::_val ) )
           ];
         }

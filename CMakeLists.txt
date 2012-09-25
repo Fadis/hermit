@@ -11,8 +11,8 @@ include(CheckCXXSourceCompiles)
 set(CMAKE_BUILD_TYPE Debug)
 
 # compile option (Debug) 
-set(CMAKE_CXX_FLAGS_DEBUG "-g -std=c++0x")
-set(CMAKE_C_FLAGS_DEBUG "-g")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -Wextra -Werror -std=c++0x")
+set(CMAKE_C_FLAGS_DEBUG "-g -Wall -Wextra -Werror")
 
 # compile option (Release)
 set(CMAKE_CXX_FLAGS_RELEASE "-W -Wall -O3 -std=c++0x")

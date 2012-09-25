@@ -39,5 +39,7 @@ int main() {
     if( uri.fragment )
       std::cout << "fragment : " << *uri.fragment << std::endl;
   }
+  typedef std::back_insert_iterator<std::string> sink_type;
+  hermit::spirit::karma::authority< sink_type > rrule;
 }
 

@@ -167,7 +167,7 @@ int main() {
   std::cout << detect_adl_function_fuga< void( foo::bar ) >::value << std::endl;
 
   std::cout << something< std::vector< int > >::value << std::endl;
-  int status;
+//  int status;
 //  std::cout << abi::__cxa_demangle( typeid( decltype( std::declval< boost::add_const< std::vector< int > >::type >() . begin() ) ).name(), 0, 0, &status ) << std::endl;
 }
 
