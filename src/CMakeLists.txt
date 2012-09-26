@@ -13,6 +13,7 @@ ADD_EXECUTABLE( s_expr_sample s_expr_sample.cpp )
 ADD_EXECUTABLE( json_sample json_sample.cpp )
 ADD_EXECUTABLE( messagepack_sample messagepack_sample.cpp )
 ADD_EXECUTABLE( messagepack_sample2 messagepack_sample2.cpp )
+ADD_EXECUTABLE( microxml_sample microxml_sample.cpp )
 ADD_EXECUTABLE( utf8_sample utf8_sample.cpp )
 ADD_EXECUTABLE( utf16_sample utf16_sample.cpp )
 ADD_EXECUTABLE( utf32_sample utf32_sample.cpp )
@@ -25,6 +26,7 @@ ADD_EXECUTABLE( task_remapper_poll_sample task_remapper_poll_sample.cpp )
 target_link_libraries( task_remapper_poll_sample ${Boost_LIBRARIES} )
 ADD_EXECUTABLE( exr exr.cpp )
 target_link_libraries( exr ${Boost_LIBRARIES} ${OPENEXR_LIBRARIES} )
+ADD_EXECUTABLE( byte_stream_iterator_sample byte_stream_iterator_sample.cpp )
 
 install( TARGETS hermit_mpint
   RUNTIME DESTINATION bin
