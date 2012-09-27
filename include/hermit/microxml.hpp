@@ -14,9 +14,9 @@
 namespace hermit {
   class microxml;
   struct microxml {
-    typedef boost::variant< std::string, boost::recursive_wrapper< microxml > > child_t;
-    typedef std::map< std::string, std::string > attr_t;
-    std::string tag;
+    typedef boost::variant< std::u32string, boost::recursive_wrapper< microxml > > child_t;
+    typedef std::map< std::u32string, std::u32string > attr_t;
+    std::u32string tag;
     attr_t attribute;
     std::vector< child_t > child;
   };
@@ -24,7 +24,7 @@ namespace hermit {
 
 BOOST_FUSION_ADAPT_STRUCT(
   hermit::microxml,
-  (std::string, tag)
+  (std::u32string, tag)
   (hermit::microxml::attr_t, attribute)
   (std::vector< hermit::microxml::child_t >, child)
 )
