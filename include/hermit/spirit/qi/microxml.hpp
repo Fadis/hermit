@@ -19,7 +19,6 @@
 namespace hermit {
   namespace spirit {
     namespace qi {
-      void foo() {  std::cout << "foo" << std::endl;}
       template< typename Iterator >
       class microxml :
         public boost::spirit::qi::grammar<
@@ -30,12 +29,18 @@ namespace hermit {
         microxml() : microxml::base_type( element ) {
           namespace qi = boost::spirit::qi;
           namespace phx = boost::phoenix;
-          element = ( qi::big_dword( 0x3Cul ) >> name >> attributeList >>
-            qi::omit[ *space_ ] >> qi::big_dword( 0x3Eul ) >> content >> 
+          element = nonEmptyElementTag|emptyElementTag;
+          nonEmptyElementTag = ( qi::big_dword( 0x3Cul ) >> name >> attributeList >>
+            qi::omit[ *space_ ] >> qi::big_dword( 0x3Eul ) >> contents >> 
             qi::big_dword( 0x3Cul ) >> qi::big_dword( 0x2Ful ) >>
-            qi::omit[ name ] >> qi::omit[ *space_ ] >> qi::big_dword( 0x3Eul ) )|
-            emptyElementTag;
-          content = *( element|comment|( +( dataChar|charRef ) ) );
+            name >> qi::omit[ *space_ ] >> qi::big_dword( 0x3Eul ) )[
+              qi::_pass = qi::_1 == qi::_4,
+              phx::at_c< 0 >( qi::_val ) = qi::_1,
+              phx::at_c< 1 >( qi::_val ) = qi::_2,
+              phx::at_c< 2 >( qi::_val ) = qi::_3
+            ];
+          contents = *content;
+          content = ( element|comment|( +( dataChar|charRef ) ) );
           emptyElementTag = qi::big_dword( 0x3Cul ) >> qi::omit[ *space_ ] >>
             name >> attributeList >> qi::big_dword( 0x2Ful ) >>
             qi::big_dword( 0x3Eul );
@@ -172,6 +177,8 @@ namespace hermit {
         } 
       private:
         boost::spirit::qi::rule< Iterator, hermit::microxml() > element;
+        boost::spirit::qi::rule< Iterator, hermit::microxml() > nonEmptyElementTag;
+        boost::spirit::qi::rule< Iterator, std::vector< hermit::microxml::child_t >() > contents;
         boost::spirit::qi::rule< Iterator, hermit::microxml::child_t() > content;
         boost::spirit::qi::rule< Iterator, char32_t() > dataChar;
         boost::spirit::qi::rule< Iterator, hermit::microxml() > emptyElementTag;
