@@ -19,6 +19,7 @@
 namespace hermit {
   namespace spirit {
     namespace qi {
+      void foo() { std::cout << "foo" << std::endl; }
       template< typename Iterator >
       class microxml :
         public boost::spirit::qi::grammar<
@@ -49,7 +50,7 @@ namespace hermit {
             qi::big_dword( 0x26ul )
           );
           attributeList = *( qi::omit[ +space_ ] >> attribute );
-          attribute = attributeName >> qi::omit[ *space_ ]
+          attribute = attributeName >> qi::omit[ *space_ ] 
             >> qi::big_dword( 0x3Dul ) >> qi::omit[ *space_ ] >>
             attributeValue;
           attributeValue = (
@@ -66,7 +67,7 @@ namespace hermit {
             qi::big_dword( 0x3Cul )|qi::big_dword( 0x3Eul )|
             qi::big_dword( 0x26ul )
           );
-          attributeName = (
+          attributeName = name - (
             qi::big_dword( 0x78ul ) >> qi::big_dword( 0x6Cul ) >> qi::big_dword( 0x6Dul ) >> qi::big_dword( 0x6Eul ) >> qi::big_dword( 0x73ul )
           );
           comment = qi::omit[ (
