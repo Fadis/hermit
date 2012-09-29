@@ -5,14 +5,18 @@
 #include <hermit/json.hpp>
 #include <hermit/messagepack.hpp>
 #include <boost/variant.hpp>
+#include <hermit/format/read/utf32.hpp>
 
 namespace hermit {
   namespace format {
     namespace convert {
       struct messagepack2json : public boost::static_visitor<hermit::json> {
 	hermit::json operator()( const std::vector< uint8_t > &src ) const {
-          std::string temp( src.begin(), src.end() );
-          return temp;
+          const auto str = hermit::format::read_utf32be( src );
+          if( !str ) {
+            return "";
+          }
+          return *str;
         }
 	hermit::json operator()( uint8_t src ) const {
           return static_cast< double >( src );
@@ -45,11 +49,14 @@ namespace hermit {
           return src;
         }
 	hermit::json operator()( const std::map< hermit::messagepack, hermit::messagepack > &src ) const {
-          std::map< std::string, hermit::json > temp;
+          std::map< std::u32string, hermit::json > temp;
           std::transform( src.begin(), src.end(), std::inserter( temp, temp.end() ),
-            []( const std::pair< hermit::messagepack, hermit::messagepack > &elem ) -> std::pair< std::string, hermit::json > {
-              std::string name( boost::get< std::vector< uint8_t > >( elem.first ).begin(), boost::get< std::vector< uint8_t > >( elem.first ).end() );
-              return std::make_pair( name, apply_visitor( messagepack2json(), elem.second ) );
+            []( const std::pair< hermit::messagepack, hermit::messagepack > &elem ) -> std::pair< std::u32string, hermit::json > {
+              const auto name = hermit::format::read_utf32be( boost::get< std::vector< uint8_t > >( elem.first ) );
+              if( !name ) {
+                return std::make_pair( std::u32string(), apply_visitor( messagepack2json(), elem.second ) );
+              }
+              return std::make_pair( *name, apply_visitor( messagepack2json(), elem.second ) );
             }
           );
           return temp;

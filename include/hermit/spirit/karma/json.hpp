@@ -13,6 +13,7 @@
 #include <boost/fusion/include/std_pair.hpp>
 
 #include <hermit/json.hpp>
+#include <hermit/format/write/utf8.hpp>
 
 namespace hermit {
   namespace spirit {

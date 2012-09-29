@@ -16,7 +16,7 @@ namespace hermit {
             public:
               utf32be() : utf32be::base_type( root ) {
                 namespace karma = boost::spirit::karma;
-                root = karma::big_dword[ karma::_pass = karma::_val <= 0x10FFFFul ];
+                root = karma::big_dword[ karma::_pass = karma::_val <= 0x10FFFFul, karma::_1 = karma::_val ];
               }
             private:
               boost::spirit::karma::rule< OutputIterator, char32_t() > root;
@@ -27,7 +27,7 @@ namespace hermit {
             public:
               utf32le() : utf32le::base_type( root ) {
                 namespace karma = boost::spirit::karma;
-                root = karma::little_dword[ karma::_pass = karma::_val <= 0x10FFFFul ];
+                root = karma::little_dword[ karma::_pass = karma::_val <= 0x10FFFFul, karma::_1 = karma::_val ];
               }
             private:
               boost::spirit::karma::rule< OutputIterator, char32_t() > root;

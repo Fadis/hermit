@@ -12,7 +12,6 @@
 #include <hermit/none_type.hpp>
 
 namespace hermit {
-  class microxml;
   struct microxml {
     typedef boost::variant< std::u32string, boost::recursive_wrapper< microxml > > child_t;
     typedef std::map< std::u32string, std::u32string > attr_t;
