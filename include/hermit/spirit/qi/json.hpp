@@ -13,6 +13,7 @@
 #include <boost/fusion/include/std_pair.hpp>
 
 #include <hermit/json.hpp>
+#include <hermit/format/read/utf8.hpp>
 #include <hermit/format/read/utf16.hpp>
 #include <hermit/format/write/utf8.hpp>
 
@@ -102,7 +103,10 @@ namespace hermit {
           ] >> qi::eps[
             qi::_val = phx::bind( &json::utf16_to_utf8, qi::_a, qi::_pass )
           ];
-          string_ = '"' >> *( (
+          string_ = string_utf8[
+            qi::_val = phx::bind( &json::utf8_to_ucs4, qi::_1, qi::_pass )
+          ];
+          string_utf8 = '"' >> *( (
             qi::repeat(1)[
               ( qi::standard::char_ - qi::standard::cntrl - '\\' - '"' )|
               escape_sequence
@@ -140,15 +144,25 @@ namespace hermit {
           _pass = true;
           return *utf8_string;
         }
+        static std::u32string utf8_to_ucs4( const std::string &src, bool &_pass ) {
+          const auto ucs4_string = hermit::format::read_utf8( src );
+          if( !ucs4_string ) {
+            _pass = false;
+            return std::u32string();
+          }
+          _pass = true;
+          return *ucs4_string;
+        }
         boost::spirit::qi::rule< Iterator, hermit::json() > root;
         boost::spirit::qi::rule< Iterator, char() > escape_sequence;
-        boost::spirit::qi::rule< Iterator, std::string() > string_;
+        boost::spirit::qi::rule< Iterator, std::string() > string_utf8;
+        boost::spirit::qi::rule< Iterator, std::u32string() > string_;
         boost::spirit::qi::rule< Iterator, std::string(), boost::spirit::qi::locals< std::vector< uint8_t > > > unicode_string;
         boost::spirit::qi::rule< Iterator, none_type() > null_;
         boost::spirit::qi::rule< Iterator, hermit::json() > value_;
         boost::spirit::qi::rule< Iterator, std::vector< hermit::json >() > array;
-        boost::spirit::qi::rule< Iterator, std::pair< std::string, hermit::json >() > named_value;
-        boost::spirit::qi::rule< Iterator, std::map< std::string, hermit::json >() > object;
+        boost::spirit::qi::rule< Iterator, std::pair< std::u32string, hermit::json >() > named_value;
+        boost::spirit::qi::rule< Iterator, std::map< std::u32string, hermit::json >() > object;
       };
     }
   }
