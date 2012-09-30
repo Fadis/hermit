@@ -1,3 +1,5 @@
+#ifndef HERMIT_FORMAT_CONVERT_JSON_TO_MESSAGEPACK_HPP
+#define HERMIT_FORMAT_CONVERT_JSON_TO_MESSAGEPACK_HPP
 
 #include <string>
 #include <vector>
@@ -68,6 +70,11 @@ namespace hermit {
         }
       };
     }
+    hermit::messagepack convert_json_to_messagepack( const hermit::json &src ) {
+      return apply_visitor( convert::json2messagepack(), src );
+    }
   }
 }
+
+#endif
 

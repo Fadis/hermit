@@ -1,10 +1,11 @@
+#ifndef HERMIT_FORMAT_CONVERT_MICROXML_TO_JSON_HPP
+#define HERMIT_FORMAT_CONVERT_MICROXML_TO_JSON_HPP
 
 #include <string>
 #include <vector>
 #include <hermit/json.hpp>
 #include <hermit/microxml.hpp>
 #include <boost/variant.hpp>
-#include <hermit/format/write/utf8.hpp>
 
 namespace hermit {
   namespace format {
@@ -39,4 +40,6 @@ namespace hermit {
     }
   }
 }
+
+#endif
 
