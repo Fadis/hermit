@@ -4,6 +4,8 @@
 #include <vector>
 #include <hermit/microxml.hpp>
 #include <hermit/spirit/qi/microxml.hpp>
+#include <hermit/format/convert/microxml2json.hpp>
+#include <hermit/format/write/json.hpp>
 
 int main() {
   std::vector< uint8_t > sample;
@@ -15,4 +17,9 @@ int main() {
   auto iter = sample.begin();
   boost::spirit::qi::parse( iter, sample.end(), rule, xml );
   std::cout << std::distance( sample.begin(), iter ) << std::endl;
+  const auto json = hermit::format::convert_microxml_to_json( xml );
+  const auto json_str = hermit::format::write_json( json );
+  if( json_str ) {
+    std::cout << *json_str << std::endl;
+  }
 }

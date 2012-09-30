@@ -27,9 +27,10 @@ namespace hermit {
           hermit::microxml()
         > {
       public:
-        microxml() : microxml::base_type( element ) {
+        microxml() : microxml::base_type( root ) {
           namespace qi = boost::spirit::qi;
           namespace phx = boost::phoenix;
+          root = -comment >> element >> -comment;
           element = nonEmptyElementTag|emptyElementTag;
           nonEmptyElementTag = ( qi::big_dword( 0x3Cul ) >> name >> attributeList >>
             qi::omit[ *space_ ] >> qi::big_dword( 0x3Eul ) >> contents >> 
@@ -41,7 +42,7 @@ namespace hermit {
               phx::at_c< 2 >( qi::_val ) = qi::_3
             ];
           contents = *content;
-          content = ( element|comment|( +( dataChar|charRef ) ) );
+          content = -comment >> ( element|( +( dataChar|charRef ) ) ) >> -comment;
           emptyElementTag = qi::big_dword( 0x3Cul ) >> qi::omit[ *space_ ] >>
             name >> attributeList >> qi::big_dword( 0x2Ful ) >>
             qi::big_dword( 0x3Eul );
@@ -142,7 +143,8 @@ namespace hermit {
             qi::_pass = ( qi::_1 >= 0xF900ul && qi::_1 <= 0xEFFFFul ),
             qi::_val = qi::_1
           ];
-          nameChar = nameStartChar|qi::big_dword[
+          nameChar = nameStartChar|nameNonStartChar;
+          nameNonStartChar = qi::big_dword[
             qi::_pass = ( qi::_1 >= 0x30ul && qi::_1 <= 0x39ul ) ||
                         qi::_1 == 0x2Dul ||
                         qi::_1 == 0x2Eul ||
@@ -151,7 +153,8 @@ namespace hermit {
                         ( qi::_1 >= 0x203Ful && qi::_1 <= 0x2040ul ),
             qi::_val = qi::_1
           ];
-          char_ = space_|( qi::big_dword[
+          char_ = space_|non_space;
+          non_space = ( qi::big_dword[
             qi::_pass = qi::_1 <= 0x10FFFFul,
             qi::_val = qi::_1
           ] - forbiddenCodePoint );
@@ -177,6 +180,7 @@ namespace hermit {
           ];
         } 
       private:
+        boost::spirit::qi::rule< Iterator, hermit::microxml() > root;
         boost::spirit::qi::rule< Iterator, hermit::microxml() > element;
         boost::spirit::qi::rule< Iterator, hermit::microxml() > nonEmptyElementTag;
         boost::spirit::qi::rule< Iterator, std::vector< hermit::microxml::child_t >() > contents;
@@ -196,9 +200,11 @@ namespace hermit {
         boost::spirit::qi::rule< Iterator, char32_t() > charName;
         boost::spirit::qi::rule< Iterator, std::u32string() > name;
         boost::spirit::qi::rule< Iterator, char32_t() > nameStartChar;
+        boost::spirit::qi::rule< Iterator, char32_t() > nameNonStartChar;
         boost::spirit::qi::rule< Iterator, char32_t() > nameChar;
         boost::spirit::qi::rule< Iterator, char32_t() > char_;
         boost::spirit::qi::rule< Iterator, char32_t() > space_;
+        boost::spirit::qi::rule< Iterator, char32_t() > non_space;
         boost::spirit::qi::rule< Iterator, char32_t() > forbiddenCodePoint;
         boost::spirit::qi::rule< Iterator, char32_t() > controlCodePoint;
         boost::spirit::qi::rule< Iterator, char32_t() > surrogateCodePoint;
