@@ -5,6 +5,7 @@
 #include <hermit/microxml.hpp>
 #include <hermit/spirit/qi/microxml.hpp>
 #include <hermit/format/convert/microxml2json.hpp>
+#include <hermit/format/convert/json2microxml.hpp>
 #include <hermit/format/write/json.hpp>
 
 int main() {
@@ -21,5 +22,11 @@ int main() {
   const auto json_str = hermit::format::write_json( json );
   if( json_str ) {
     std::cout << *json_str << std::endl;
+  }
+  const auto xml2 = hermit::format::convert_json_to_microxml( json );
+  const auto json2 = hermit::format::convert_microxml_to_json( xml2 );
+  const auto json_str2 = hermit::format::write_json( json2 );
+  if( json_str2 ) {
+    std::cout << *json_str2 << std::endl;
   }
 }
