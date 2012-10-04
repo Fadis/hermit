@@ -22,7 +22,7 @@ namespace hermit {
                 namespace qi = boost::spirit::qi;
                 namespace dt = boost::date_time;
                 namespace phx = boost::phoenix;
-                root = ( wkday >> qi::omit[ *qi::standard::space ] >> ',' >> qi::omit[ +qi::standard::space ] >>
+                root = ( wkday >> ',' >> qi::omit[ +qi::standard::space ] >>
                          date >> qi::omit[ +qi::standard::space ] >> time >> qi::omit[ +qi::standard::space ] >>
                          zone )[
                   qi::_pass = qi::_1 == phx::bind( &boost::gregorian::date::day_of_week, &qi::_2 ),
@@ -34,9 +34,7 @@ namespace hermit {
                   qi::_pass = qi::_1 <= phx::bind( boost::gregorian::gregorian_calendar::end_of_month_day, qi::_3, qi::_2 ),
                   qi::_val = phx::construct< boost::gregorian::date >( qi::_3, qi::_2, qi::_1 )
                 ];
-                time = ( dec2_p >> qi::omit[ *qi::standard::space ] >> ':' >> qi::omit[ *qi::standard::space ] >>
-                         dec2_p >> qi::omit[ *qi::standard::space ] >> ':' >> qi::omit[ *qi::standard::space ] >>
-                         dec2_p )[
+                time = ( dec2_p >> ':' >> dec2_p >> ':' >> dec2_p )[
                   qi::_pass = qi::_1 < 24u && qi::_2 < 60u && qi::_3 < 60u,
                   qi::_val = phx::construct< boost::posix_time::time_duration >( qi::_1, qi::_2, qi::_3 )
                 ];
