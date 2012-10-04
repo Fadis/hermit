@@ -22,17 +22,22 @@ namespace hermit {
                 namespace qi = boost::spirit::qi;
                 namespace dt = boost::date_time;
                 namespace phx = boost::phoenix;
-                root = qi::skip(qi::standard::space)[
-                  wkday >> ',' >> date >> time >> zone
-                ][
-                  qi::_val = phx::construct< boost::posix_time::ptime >( qi::_2, qi::_3 )
+                root = ( wkday >> qi::omit[ *qi::standard::space ] >> ',' >> qi::omit[ +qi::standard::space ] >>
+                         date >> qi::omit[ +qi::standard::space ] >> time >> qi::omit[ +qi::standard::space ] >>
+                         zone )[
+                  qi::_pass = qi::_1 == phx::bind( &boost::gregorian::date::day_of_week, &qi::_2 ),
+                  qi::_val = phx::construct< boost::posix_time::ptime >( qi::_2,
+                    qi::_3 + phx::construct< boost::posix_time::time_duration >( qi::_4, 0, 0 )
+                  )
                 ];
-                date = qi::skip( qi::standard::space )[ dec2_p >> month >> dec4_p ][
+                date = ( dec2_p >> qi::omit[ +qi::standard::space ] >> month >> qi::omit[ +qi::standard::space ] >> dec4_p )[
                   qi::_pass = qi::_1 <= phx::bind( boost::gregorian::gregorian_calendar::end_of_month_day, qi::_3, qi::_2 ),
                   qi::_val = phx::construct< boost::gregorian::date >( qi::_3, qi::_2, qi::_1 )
                 ];
-                time = qi::skip( qi::standard::space )[ dec2_p >> ':' >> dec2_p >> ':' >> dec2_p ][
-                  qi::_pass = qi::_1 < 24 && qi::_2 < 60 && qi::_3 < 60,
+                time = ( dec2_p >> qi::omit[ *qi::standard::space ] >> ':' >> qi::omit[ *qi::standard::space ] >>
+                         dec2_p >> qi::omit[ *qi::standard::space ] >> ':' >> qi::omit[ *qi::standard::space ] >>
+                         dec2_p )[
+                  qi::_pass = qi::_1 < 24u && qi::_2 < 60u && qi::_3 < 60u,
                   qi::_val = phx::construct< boost::posix_time::time_duration >( qi::_1, qi::_2, qi::_3 )
                 ];
                 wkday.add( "Mon", dt::Monday )( "Tue", dt::Tuesday )( "Wed", dt::Wednesday )( "Thu", dt::Thursday )
@@ -53,9 +58,9 @@ namespace hermit {
               boost::spirit::qi::rule< InputIterator, boost::posix_time::ptime() > root;
               boost::spirit::qi::rule< InputIterator, boost::gregorian::date() > date;
               boost::spirit::qi::rule< InputIterator, boost::posix_time::time_duration() > time;
-              boost::spirit::qi::symbols< std::string, boost::date_time::weekdays > wkday; 
-              boost::spirit::qi::symbols< std::string, int > zone; 
-              boost::spirit::qi::symbols< std::string, boost::date_time::months_of_year > month;
+              boost::spirit::qi::symbols< char, boost::date_time::weekdays > wkday; 
+              boost::spirit::qi::symbols< char, int > zone; 
+              boost::spirit::qi::symbols< char, boost::date_time::months_of_year > month;
       };
     }
   }
