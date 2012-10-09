@@ -40,7 +40,7 @@ namespace hermit {
                   qi::_pass = ( qi::_1 & 0xFE ) == 0xFC,
                   qi::_val = qi::_1 & 0x01
                     ];
-                root =
+                char_raw =
                   qi::byte_[ qi::_pass = qi::_1 < 0x80, qi::_val = qi::_1 ]|
                   ( block1_head >> continous )[
                   qi::_val = boost::phoenix::static_cast_<char32_t>( qi::_1 ) << 6|
@@ -72,6 +72,13 @@ namespace hermit {
                   boost::phoenix::static_cast_<char32_t>( qi::_5 ) << 6|
                   boost::phoenix::static_cast_<char32_t>( qi::_6 )
                   ];
+                root = char_raw[
+                  qi::_pass = ( qi::_1 < 0xD800ul || qi::_1 > 0xDFFFul ) &&
+                    ( qi::_1 < 0xFDD0ul || qi::_1 > 0xFDEFul ) &&
+                    ( ( qi::_1 & 0xFFFFul ) < 0xFFFEul ) &&
+                    ( qi::_1 <= 0x10FFFFul ),
+                  qi::_val = qi::_1
+                ];
               }
             private:
               boost::spirit::qi::rule< InputIterator, uint8_t() > continous;
@@ -80,6 +87,25 @@ namespace hermit {
               boost::spirit::qi::rule< InputIterator, uint8_t() > block3_head;
               boost::spirit::qi::rule< InputIterator, uint8_t() > block4_head;
               boost::spirit::qi::rule< InputIterator, uint8_t() > block5_head;
+              boost::spirit::qi::rule< InputIterator, char32_t() > char_raw;
+              boost::spirit::qi::rule< InputIterator, char32_t() > root;
+      };
+
+
+      template <typename InputIterator>
+        class utf8control :
+          public boost::spirit::qi::grammar< InputIterator, char32_t() > {
+            public:
+              utf8control() : utf8control::base_type( root ) {
+                namespace qi = boost::spirit::qi;
+                root = utf8_char[
+                  qi::_pass = qi::_1 <= 0x1Ful ||
+                       ( qi::_1 >= 0x7Ful && qi::_1 <= 0x9Ful ),
+                  qi::_val = qi::_1
+                ];
+              }
+            private:
+              utf8< InputIterator > utf8_char;
               boost::spirit::qi::rule< InputIterator, char32_t() > root;
       };
 

@@ -22,10 +22,17 @@ namespace hermit {
                     ( ( boost::phoenix::static_cast_< uint32_t >( qi::_1 & 0x03FF ) << 10 )|
                         boost::phoenix::static_cast_< uint32_t >( qi::_2 & 0x03FF ) ) + 0x10000
                 ];
-                root = surrogate_pairs|qi::big_word;
+                char_raw = surrogate_pairs|qi::big_word;
+                root = char_raw[
+                  qi::_pass = ( qi::_1 < 0xD800ul || qi::_1 > 0xDFFFul ) &&
+                    ( qi::_1 < 0xFDD0ul || qi::_1 > 0xFDEFul ) &&
+                    ( ( qi::_1 & 0xFFFFul ) < 0xFFFEul ),
+                  qi::_val = qi::_1
+                ];
               }
             private:
               boost::spirit::qi::rule< InputIterator, char32_t() > surrogate_pairs;
+              boost::spirit::qi::rule< InputIterator, char32_t() > char_raw;
               boost::spirit::qi::rule< InputIterator, char32_t() > root;
       };
       template <typename InputIterator>
@@ -40,12 +47,55 @@ namespace hermit {
                     ( ( boost::phoenix::static_cast_< uint32_t >( qi::_1 & 0x03FF ) << 10 )|
                         boost::phoenix::static_cast_< uint32_t >( qi::_2 & 0x03FF ) ) + 0x10000
                 ];
-                root = surrogate_pairs|qi::little_word;
+                char_raw = surrogate_pairs|qi::little_word;
+                root = char_raw[
+                  qi::_pass = ( qi::_1 < 0xD800ul || qi::_1 > 0xDFFFul ) &&
+                    ( qi::_1 < 0xFDD0ul || qi::_1 > 0xFDEFul ) &&
+                    ( ( qi::_1 & 0xFFFFul ) < 0xFFFEul ),
+                  qi::_val = qi::_1
+                ];
               }
             private:
               boost::spirit::qi::rule< InputIterator, char32_t() > surrogate_pairs;
+              boost::spirit::qi::rule< InputIterator, char32_t() > char_raw;
               boost::spirit::qi::rule< InputIterator, char32_t() > root;
       };
+
+
+      template <typename InputIterator>
+        class utf16becontrol :
+          public boost::spirit::qi::grammar< InputIterator, char32_t() > {
+            public:
+              utf16becontrol() : utf16becontrol::base_type( root ) {
+                namespace qi = boost::spirit::qi;
+                root = utf16be_char[
+                  qi::_pass = qi::_1 <= 0x1Ful ||
+                       ( qi::_1 >= 0x7Ful && qi::_1 <= 0x9Ful ),
+                  qi::_val = qi::_1
+                ];
+              }
+            private:
+              utf16be< InputIterator > utf16be_char;
+              boost::spirit::qi::rule< InputIterator, char32_t() > root;
+      };
+      
+      template <typename InputIterator>
+        class utf16lecontrol :
+          public boost::spirit::qi::grammar< InputIterator, char32_t() > {
+            public:
+              utf16lecontrol() : utf16lecontrol::base_type( root ) {
+                namespace qi = boost::spirit::qi;
+                root = utf16le_char[
+                  qi::_pass = qi::_1 <= 0x1Ful ||
+                       ( qi::_1 >= 0x7Ful && qi::_1 <= 0x9Ful ),
+                  qi::_val = qi::_1
+                ];
+              }
+            private:
+              utf16le< InputIterator > utf16le_char;
+              boost::spirit::qi::rule< InputIterator, char32_t() > root;
+      };
+      
       template <typename InputIterator>
         class utf16bestring :
           public boost::spirit::qi::grammar< InputIterator, std::u32string() > {

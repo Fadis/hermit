@@ -1,6 +1,7 @@
 #include <string>
 #include <iostream>
 #include <hermit/spirit/qi/http_date.hpp>
+#include <hermit/spirit/karma/rfc850_date.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 int main() {
