@@ -17,28 +17,20 @@ namespace hermit {
               utf8() : utf8::base_type( root ) {
                 namespace qi = boost::spirit::qi;
                 continous = qi::byte_[
-                  qi::_pass = ( qi::_1 & 0xC0 ) == 0x80,
+                  qi::_pass = ( qi::_1 & 0xC0 ) == 0x80 && ( qi::_1 & 0x3F ) != 0x00,
                   qi::_val = qi::_1 & 0x3F
                     ];
                 block1_head = qi::byte_[
-                  qi::_pass = ( qi::_1 & 0xE0 ) == 0xC0,
+                  qi::_pass = ( qi::_1 & 0xE0 ) == 0xC0 && ( qi::_1 & 0x3F ) != 0x00,
                   qi::_val = qi::_1 & 0x1F
                     ];
                 block2_head = qi::byte_[
-                  qi::_pass = ( qi::_1 & 0xF0 ) == 0xE0,
+                  qi::_pass = ( qi::_1 & 0xF0 ) == 0xE0 && ( qi::_1 & 0x3F ) != 0x00,
                   qi::_val = qi::_1 & 0x0F
                     ];
                 block3_head = qi::byte_[
-                  qi::_pass = ( qi::_1 & 0xF8 ) == 0xF0,
+                  qi::_pass = ( qi::_1 & 0xF8 ) == 0xF0 && ( qi::_1 & 0x3F ) != 0x00,
                   qi::_val = qi::_1 & 0x07
-                    ];
-                block4_head = qi::byte_[
-                  qi::_pass = ( qi::_1 & 0xFC ) == 0xF8,
-                  qi::_val = qi::_1 & 0x03
-                    ];
-                block5_head = qi::byte_[
-                  qi::_pass = ( qi::_1 & 0xFE ) == 0xFC,
-                  qi::_val = qi::_1 & 0x01
                     ];
                 char_raw =
                   qi::byte_[ qi::_pass = qi::_1 < 0x80, qi::_val = qi::_1 ]|
@@ -56,21 +48,6 @@ namespace hermit {
                   boost::phoenix::static_cast_<char32_t>( qi::_2 ) << 12|
                   boost::phoenix::static_cast_<char32_t>( qi::_3 ) << 6|
                   boost::phoenix::static_cast_<char32_t>( qi::_4 )
-                  ]|
-                  ( block4_head >> continous >> continous >> continous >> continous )[
-                  qi::_val = boost::phoenix::static_cast_<char32_t>( qi::_1 ) << 24|
-                  boost::phoenix::static_cast_<char32_t>( qi::_2 ) << 18|
-                  boost::phoenix::static_cast_<char32_t>( qi::_3 ) << 12|
-                  boost::phoenix::static_cast_<char32_t>( qi::_4 ) << 6|
-                  boost::phoenix::static_cast_<char32_t>( qi::_5 )
-                  ]|
-                  ( block5_head >> continous >> continous >> continous >> continous >> continous )[
-                  qi::_val = boost::phoenix::static_cast_<char32_t>( qi::_1 ) << 30|
-                  boost::phoenix::static_cast_<char32_t>( qi::_2 ) << 24|
-                  boost::phoenix::static_cast_<char32_t>( qi::_3 ) << 18|
-                  boost::phoenix::static_cast_<char32_t>( qi::_4 ) << 12|
-                  boost::phoenix::static_cast_<char32_t>( qi::_5 ) << 6|
-                  boost::phoenix::static_cast_<char32_t>( qi::_6 )
                   ];
                 root = char_raw[
                   qi::_pass = ( qi::_1 < 0xD800ul || qi::_1 > 0xDFFFul ) &&
@@ -85,8 +62,6 @@ namespace hermit {
               boost::spirit::qi::rule< InputIterator, uint8_t() > block1_head;
               boost::spirit::qi::rule< InputIterator, uint8_t() > block2_head;
               boost::spirit::qi::rule< InputIterator, uint8_t() > block3_head;
-              boost::spirit::qi::rule< InputIterator, uint8_t() > block4_head;
-              boost::spirit::qi::rule< InputIterator, uint8_t() > block5_head;
               boost::spirit::qi::rule< InputIterator, char32_t() > char_raw;
               boost::spirit::qi::rule< InputIterator, char32_t() > root;
       };
