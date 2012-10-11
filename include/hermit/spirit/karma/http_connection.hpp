@@ -10,9 +10,9 @@
 namespace hermit {
   namespace spirit {
     namespace karma {
-      template <typename InputIterator>
+      template <typename Iterator>
         class http_connection :
-          public boost::spirit::karma::grammar< InputIterator, std::vector< std::string >() > {
+          public boost::spirit::karma::grammar< Iterator, std::vector< std::string >() > {
             public:
               http_connection() : http_connection::base_type( root ) {
                 namespace karma = boost::spirit::karma;
@@ -34,9 +34,9 @@ namespace hermit {
                 root = "Connection: " << ( token % ", " );
               }
             private:
-              boost::spirit::karma::rule< InputIterator, char() > token_char;
-              boost::spirit::karma::rule< InputIterator, std::string() > token;
-              boost::spirit::karma::rule< InputIterator, std::vector< std::string >() > root;
+              boost::spirit::karma::rule< Iterator, char() > token_char;
+              boost::spirit::karma::rule< Iterator, std::string() > token;
+              boost::spirit::karma::rule< Iterator, std::vector< std::string >() > root;
       };
     }
   }

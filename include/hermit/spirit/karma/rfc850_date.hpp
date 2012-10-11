@@ -14,9 +14,9 @@
 namespace hermit {
   namespace spirit {
     namespace karma {
-      template <typename InputIterator>
+      template <typename Iterator>
         class rfc850_date :
-          public boost::spirit::karma::grammar< InputIterator, boost::posix_time::ptime() > {
+          public boost::spirit::karma::grammar< Iterator, boost::posix_time::ptime() > {
             public:
               rfc850_date() : rfc850_date::base_type( root ) {
                 namespace karma = boost::spirit::karma;
@@ -53,12 +53,12 @@ namespace hermit {
               }
             private:
               boost::spirit::karma::uint_generator<unsigned int, 10> dec_p;
-              boost::spirit::karma::rule< InputIterator, boost::posix_time::ptime() > root;
-              boost::spirit::karma::rule< InputIterator, boost::gregorian::date() > date;
-              boost::spirit::karma::rule< InputIterator, boost::posix_time::time_duration() > time;
-              boost::spirit::karma::rule< InputIterator, boost::posix_time::time_duration() > zone;
-              boost::spirit::karma::rule< InputIterator, boost::posix_time::time_duration() > zone_pos;
-              boost::spirit::karma::rule< InputIterator, boost::posix_time::time_duration() > zone_neg;
+              boost::spirit::karma::rule< Iterator, boost::posix_time::ptime() > root;
+              boost::spirit::karma::rule< Iterator, boost::gregorian::date() > date;
+              boost::spirit::karma::rule< Iterator, boost::posix_time::time_duration() > time;
+              boost::spirit::karma::rule< Iterator, boost::posix_time::time_duration() > zone;
+              boost::spirit::karma::rule< Iterator, boost::posix_time::time_duration() > zone_pos;
+              boost::spirit::karma::rule< Iterator, boost::posix_time::time_duration() > zone_neg;
               boost::spirit::karma::symbols< boost::date_time::weekdays, std::string > weekday;
               boost::spirit::karma::symbols< boost::date_time::months_of_year, std::string > month;
       };

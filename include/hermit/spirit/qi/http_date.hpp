@@ -23,7 +23,11 @@ namespace hermit {
           public boost::spirit::qi::grammar< InputIterator, boost::posix_time::ptime() > {
             public:
               http_date() : http_date::base_type( root ) {
-                root = rfc1123|rfc850|ascii;
+                namespace qi = boost::spirit::qi;
+                namespace phx = boost::phoenix;
+                root = qi::skip( qi::standard::space )[
+                  qi::lit( "Date" ) >> ':' >> ( rfc1123|rfc850|ascii )
+                ];
               }
             private:
               rfc1123_date< InputIterator > rfc1123;

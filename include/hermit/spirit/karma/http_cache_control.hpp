@@ -15,9 +15,9 @@
 namespace hermit {
   namespace spirit {
     namespace karma {
-      template <typename InputIterator>
+      template <typename Iterator>
         class http_cache_control_request :
-          public boost::spirit::karma::grammar< InputIterator, hermit::http::cache_control_request() > {
+          public boost::spirit::karma::grammar< Iterator, hermit::http::cache_control_request() > {
             public:
               typedef boost::fusion::vector3< std::string, boost::optional< unsigned int >, boost::optional< std::string > > attr_type;
               http_cache_control_request() : http_cache_control_request::base_type( root ) {
@@ -76,19 +76,19 @@ namespace hermit {
               static void build_extensions( const std::map< std::string, boost::optional< std::string > > src, std::vector< attr_type > &dest, bool &_pass ) {
                 std::transform( src.begin(), src.end(), std::back_inserter( dest ), [&]( const std::pair< std::string, boost::optional< std::string > > &src ) -> attr_type { _pass = !src.first.empty(); return attr_type( src.first, boost::none, src.second ); } );
               }
-              boost::spirit::karma::rule< InputIterator, char() > text_char;
-              boost::spirit::karma::rule< InputIterator, char() > text;
-              boost::spirit::karma::rule< InputIterator, char() > quoted_pair;
-              boost::spirit::karma::rule< InputIterator, std::string() > quoted_string;
-              boost::spirit::karma::rule< InputIterator, char() > token_char;
-              boost::spirit::karma::rule< InputIterator, std::string() > token;
-              boost::spirit::karma::rule< InputIterator, hermit::http::cache_control_request() > root;
+              boost::spirit::karma::rule< Iterator, char() > text_char;
+              boost::spirit::karma::rule< Iterator, char() > text;
+              boost::spirit::karma::rule< Iterator, char() > quoted_pair;
+              boost::spirit::karma::rule< Iterator, std::string() > quoted_string;
+              boost::spirit::karma::rule< Iterator, char() > token_char;
+              boost::spirit::karma::rule< Iterator, std::string() > token;
+              boost::spirit::karma::rule< Iterator, hermit::http::cache_control_request() > root;
       };
 
 
-      template <typename InputIterator>
+      template <typename Iterator>
         class http_cache_control_response :
-          public boost::spirit::karma::grammar< InputIterator, hermit::http::cache_control_response() > {
+          public boost::spirit::karma::grammar< Iterator, hermit::http::cache_control_response() > {
             public:
               typedef boost::fusion::vector4< std::string, boost::optional< unsigned int >, boost::optional< std::string >, boost::optional< std::vector< std::string > > > attr_type;
               http_cache_control_response() : http_cache_control_response::base_type( root ) {
@@ -158,21 +158,21 @@ namespace hermit {
               static void build_extensions( const std::map< std::string, boost::optional< std::string > > src, std::vector< attr_type > &dest, bool &_pass ) {
                 std::transform( src.begin(), src.end(), std::back_inserter( dest ), [&]( const std::pair< std::string, boost::optional< std::string > > &src ) -> attr_type { _pass = !src.first.empty(); return attr_type( src.first, boost::none, src.second, boost::none ); } );
               }
-              boost::spirit::karma::rule< InputIterator, char() > separators;
-              boost::spirit::karma::rule< InputIterator, char() > text_char;
-              boost::spirit::karma::rule< InputIterator, char() > text;
-              boost::spirit::karma::rule< InputIterator, char() > quoted_pair;
-              boost::spirit::karma::rule< InputIterator, std::string() > quoted_string;
-              boost::spirit::karma::rule< InputIterator, char() > token_char;
-              boost::spirit::karma::rule< InputIterator, std::string() > token;
-              boost::spirit::karma::rule< InputIterator, std::vector< std::string >() > tokens;
-              boost::spirit::karma::rule< InputIterator, hermit::http::cache_control_response() > root;
+              boost::spirit::karma::rule< Iterator, char() > separators;
+              boost::spirit::karma::rule< Iterator, char() > text_char;
+              boost::spirit::karma::rule< Iterator, char() > text;
+              boost::spirit::karma::rule< Iterator, char() > quoted_pair;
+              boost::spirit::karma::rule< Iterator, std::string() > quoted_string;
+              boost::spirit::karma::rule< Iterator, char() > token_char;
+              boost::spirit::karma::rule< Iterator, std::string() > token;
+              boost::spirit::karma::rule< Iterator, std::vector< std::string >() > tokens;
+              boost::spirit::karma::rule< Iterator, hermit::http::cache_control_response() > root;
       };
 
 /*
-      template <typename InputIterator>
+      template <typename Iterator>
         class http_cache_control_response :
-          public boost::spirit::qi::grammar< InputIterator, hermit::http::cache_control_response() > {
+          public boost::spirit::qi::grammar< Iterator, hermit::http::cache_control_response() > {
             public:
               http_cache_control_response() : http_cache_control_response::base_type( root ) {
                 namespace qi = boost::spirit::qi;
@@ -221,13 +221,13 @@ namespace hermit {
                 ][ qi::_pass = true ];
               }
             private:
-              boost::spirit::karma::rule< InputIterator, char() > separators;
-              boost::spirit::karma::rule< InputIterator, char() > text;
-              boost::spirit::karma::rule< InputIterator, char() > quoted_pair;
-              boost::spirit::karma::rule< InputIterator, std::string() > quoted_string;
-              boost::spirit::karma::rule< InputIterator, std::string() > token;
-              boost::spirit::karma::rule< InputIterator, std::vector< std::string >() > tokens;
-              boost::spirit::karma::rule< InputIterator, hermit::http::cache_control_response() > root;
+              boost::spirit::karma::rule< Iterator, char() > separators;
+              boost::spirit::karma::rule< Iterator, char() > text;
+              boost::spirit::karma::rule< Iterator, char() > quoted_pair;
+              boost::spirit::karma::rule< Iterator, std::string() > quoted_string;
+              boost::spirit::karma::rule< Iterator, std::string() > token;
+              boost::spirit::karma::rule< Iterator, std::vector< std::string >() > tokens;
+              boost::spirit::karma::rule< Iterator, hermit::http::cache_control_response() > root;
       };
 */
     }
