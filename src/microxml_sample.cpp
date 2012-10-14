@@ -4,6 +4,7 @@
 #include <vector>
 #include <hermit/microxml.hpp>
 #include <hermit/spirit/qi/microxml.hpp>
+#include <hermit/spirit/karma/microxml.hpp>
 #include <hermit/format/convert/microxml2json.hpp>
 #include <hermit/format/convert/json2microxml.hpp>
 #include <hermit/format/write/json.hpp>
@@ -29,5 +30,12 @@ int main() {
   if( json_str2 ) {
     std::cout << *json_str2 << std::endl;
   }
+  std::string encoded;
+  {
+    typedef std::back_insert_iterator<std::string> sink_type;
+    hermit::spirit::karma::microxml< sink_type > rule;
+    boost::spirit::karma::generate( sink_type( encoded ), rule, xml2 );
+  }
+  std::cout << encoded << std::endl;
 }
 
