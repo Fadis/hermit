@@ -30,8 +30,8 @@ namespace hermit {
         microxml() : microxml::base_type( root ) {
           namespace karma = boost::spirit::karma;
           namespace phx = boost::phoenix;
-          root = element;
           element = nonEmptyElementTag|emptyElementTag;
+          root = element;
           nonEmptyElementTag = ( '<' << name << attributeList << '>' << contents << "</" << name << '>' )[
             karma::_1 = phx::at_c< 0 >( karma::_val ),
             karma::_2 = phx::at_c< 1 >( karma::_val ),
@@ -39,7 +39,7 @@ namespace hermit {
             karma::_4 = phx::at_c< 0 >( karma::_val )
           ];
           contents = *content;
-          content = element|( +( dataChar|charRef ) );
+          content = ( +( charRef|dataChar ) )|element;
           emptyElementTag = '<' << name << attributeList << "/>";
           dataChar = char_[
             karma::_pass = karma::_val != U'<' && karma::_val != U'>' && karma::_val != U'&',
@@ -56,9 +56,8 @@ namespace hermit {
             karma::_pass = karma::_val != phx::construct< std::u32string >( U"xmlns" ),
             karma::_1 = karma::_val
           ];
-          charRef = numericCharRef | namedCharRef;
-          numericCharRef = "&#x" << karma::hex << ';';
           namedCharRef = '&' << charName << ';';
+          charRef = namedCharRef;
           charName.add( U'&', "amp" )( U'<', "lt" )( U'>', "gt" )( U'"', "quot" )( U'\'', "apos" );
           name = nameStartChar << *nameChar;
           nameStartChar = utf8_[
@@ -115,7 +114,6 @@ namespace hermit {
         boost::spirit::karma::rule< Iterator, char32_t() > attributeValueChar;
         boost::spirit::karma::rule< Iterator, std::u32string() > attributeName;
         boost::spirit::karma::rule< Iterator, char32_t() > charRef;
-        boost::spirit::karma::rule< Iterator, char32_t() > numericCharRef;
         boost::spirit::karma::rule< Iterator, char32_t() > namedCharRef;
         boost::spirit::karma::symbols< char32_t, std::string > charName;
         boost::spirit::karma::rule< Iterator, std::u32string() > name;
