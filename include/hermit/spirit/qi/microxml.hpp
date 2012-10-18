@@ -20,7 +20,6 @@
 namespace hermit {
   namespace spirit {
     namespace qi {
-      void foo() { std::cout << "foo" << std::endl; }
       template< typename Iterator >
       class microxml :
         public boost::spirit::qi::grammar<
