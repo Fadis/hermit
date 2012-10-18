@@ -1,5 +1,5 @@
 #include <iostream>
-#include <boost/gil/gil_all.hpp>
+//#include <boost/gil/gil_all.hpp>
 #include <OpenEXR/ImfRgbaFile.h>
 #include <OpenEXR/ImfArray.h>
 /*

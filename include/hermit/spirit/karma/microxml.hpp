@@ -20,6 +20,7 @@
 namespace hermit {
   namespace spirit {
     namespace karma {
+      void foo() { std::cout << "foo" << std::endl; }
       template< typename Iterator >
       class microxml :
         public boost::spirit::karma::grammar<
@@ -33,13 +34,15 @@ namespace hermit {
           element = nonEmptyElementTag|emptyElementTag;
           root = element;
           nonEmptyElementTag = ( '<' << name << attributeList << '>' << contents << "</" << name << '>' )[
+            karma::_pass = phx::size( phx::at_c< 2 >( karma::_val ) ) > 0ul,
             karma::_1 = phx::at_c< 0 >( karma::_val ),
             karma::_2 = phx::at_c< 1 >( karma::_val ),
             karma::_3 = phx::at_c< 2 >( karma::_val ),
             karma::_4 = phx::at_c< 0 >( karma::_val )
           ];
           contents = *content;
-          content = ( +( charRef|dataChar ) )|element;
+          content = content_str|element;
+          content_str = +( charRef|dataChar );
           emptyElementTag = '<' << name << attributeList << "/>";
           dataChar = char_[
             karma::_pass = karma::_val != U'<' && karma::_val != U'>' && karma::_val != U'&',
@@ -47,7 +50,7 @@ namespace hermit {
           ];
           attributeList = *( ' ' << attribute );
           attribute = attributeName <<  '=' << attributeValue;
-          attributeValue = ( '"' << *( ( attributeValueChar )|charRef ) << '"' );
+          attributeValue = ( '"' << *( attributeValueChar|charRef ) << '"' );
           attributeValueChar = char_[
             karma::_pass = karma::_val != U'<' && karma::_val != U'>' && karma::_val != U'&' && karma::_val != U'"',
             karma::_1 = karma::_val
@@ -106,6 +109,7 @@ namespace hermit {
         boost::spirit::karma::rule< Iterator, hermit::microxml() > nonEmptyElementTag;
         boost::spirit::karma::rule< Iterator, std::vector< hermit::microxml::child_t >() > contents;
         boost::spirit::karma::rule< Iterator, hermit::microxml::child_t() > content;
+        boost::spirit::karma::rule< Iterator, std::u32string() > content_str;
         boost::spirit::karma::rule< Iterator, char32_t() > dataChar;
         boost::spirit::karma::rule< Iterator, hermit::microxml() > emptyElementTag;
         boost::spirit::karma::rule< Iterator, hermit::microxml::attr_t() > attributeList;

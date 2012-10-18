@@ -44,7 +44,7 @@ namespace hermit {
           contents = *content;
           content = -comment >> ( element|( +( dataChar|charRef ) ) ) >> -comment;
           emptyElementTag = '<' >> qi::omit[ *space_ ] >>
-            name >> attributeList >> "/>";
+            name >> attributeList >> qi::omit[ *space_ ] >> "/>";
           dataChar = char_ - qi::standard::char_( "<>&" );
           attributeList = *( qi::omit[ +space_ ] >> attribute );
           attribute = attributeName >> qi::omit[ *space_ ] 
