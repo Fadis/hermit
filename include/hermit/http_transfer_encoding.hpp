@@ -6,12 +6,14 @@
 #include <map>
 #include <boost/optional.hpp>
 #include <boost/variant.hpp>
+#include <boost/fusion/adapted/struct/adapt_struct.hpp>
+#include <boost/fusion/include/adapt_struct.hpp>
 
 namespace hermit {
   namespace http {
     struct transfer_encoding {
       typedef std::map< std::string, boost::optional< std::string > > attribute_type;
-      transfer_encoding() : {}
+      transfer_encoding() {}
       std::string name;
       attribute_type attribute;
     };

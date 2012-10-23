@@ -6,8 +6,9 @@
 #include <map>
 #include <boost/optional.hpp>
 #include <boost/variant.hpp>
+#include <boost/fusion/adapted/struct/adapt_struct.hpp>
+#include <boost/fusion/include/adapt_struct.hpp>
 
-#include <hermit/uri.hpp>
 
 namespace hermit {
   namespace http {

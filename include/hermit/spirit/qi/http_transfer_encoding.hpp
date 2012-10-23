@@ -16,7 +16,7 @@ namespace hermit {
     namespace qi {
       template <typename InputIterator>
         class http_transfer_encoding :
-          public boost::spirit::qi::grammar< InputIterator, std::vector< hermit::transfer_encoding >() > {
+          public boost::spirit::qi::grammar< InputIterator, std::vector< hermit::http::transfer_encoding >() > {
             public:
               http_transfer_encoding() : http_transfer_encoding::base_type( root ) {
                 namespace qi = boost::spirit::qi;
@@ -43,8 +43,8 @@ namespace hermit {
               boost::spirit::qi::rule< InputIterator, std::string() > quoted_string;
               boost::spirit::qi::rule< InputIterator, std::string() > token;
               boost::spirit::qi::rule< InputIterator, std::pair< std::string, std::string >() > parameter;
-              boost::spirit::qi::rule< InputIterator, hermit::transfer_encoding() > transfer_encoding;
-              boost::spirit::qi::rule< InputIterator, std::vector< hermit::transfer_encoding >() > root;
+              boost::spirit::qi::rule< InputIterator, hermit::http::transfer_encoding() > transfer_encoding;
+              boost::spirit::qi::rule< InputIterator, std::vector< hermit::http::transfer_encoding >() > root;
       };
     }
   }

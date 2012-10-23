@@ -1,6 +1,5 @@
 #include <string>
 #include <iostream>
-#include <hermit/http_cache_control.hpp>
 #include <hermit/spirit/qi/http_connection.hpp>
 #include <hermit/spirit/karma/http_connection.hpp>
 

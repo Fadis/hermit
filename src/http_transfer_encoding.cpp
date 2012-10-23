@@ -5,8 +5,8 @@
 
 int main() {
   {
-    std::string source( "Trailer: hoge, fuga, piyo" );
-    std::vector< std::string > decoded;
+    std::string source( "Transfer-Encoding: hoge, fuga;a=b;c=d, piyo" );
+    std::vector< hermit::http::transfer_encoding > decoded;
     {
       hermit::spirit::qi::http_transfer_encoding< std::string::iterator > rule;
       auto iter = source.begin();
