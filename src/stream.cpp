@@ -10,6 +10,8 @@
 #include <boost/iterator_adaptors.hpp>
 #include <boost/ref.hpp>
 #include <boost/iterator/reverse_iterator.hpp>
+#include <boost/swap.hpp>
+#include <boost/type_traits.hpp>
 namespace stream {
   namespace simd {
     namespace arch {
@@ -402,9 +404,11 @@ namespace stream {
   boost::proto::terminal< placeholder< boost::mpl::int_< 5 > > >::type const _6 = {{}};
 
 
-  template< typename ArgumentsType, typename BufferType >
+  template< typename ArgumentsType, typename T, typename Size >
     class my_context {
       public:
+        typedef typename stream::simd::compiler::vector< T, Size >::type buffer_type;
+        typedef my_context< ArgumentsType, T, Size > self_type;
         my_context( const ArgumentsType &args ) : arguments( args ) {}
         template< typename Expr, typename  Enable = void > struct eval {};
         template<
@@ -415,9 +419,9 @@ namespace stream {
             proto::matches< Expr, proto::terminal< proto::_ > >
             >::type
             > {
-              typedef void result_type;
-              result_type operator()( Expr &e, const my_context< ArgumentsType, BufferType > &context ) {
-                my_context< ArgumentsType, BufferType >::as_value( boost::proto::value( e ), context );
+              typedef decltype( self_type::as_value( boost::proto::value( std::declval< Expr >() ), std::declval<self_type&>() ) ) result_type;
+              result_type operator()( Expr &e, self_type &context ) { 
+                return self_type::as_value( boost::proto::value( e ), context );
               }
             };
         template<
@@ -426,41 +430,81 @@ namespace stream {
           Expr,
           typename boost::enable_if<
             proto::matches< Expr, proto::plus< proto::_, proto::_ > >
-            >::type
-            > {
-              typedef void result_type;
-              result_type operator()( Expr &e, const my_context< ArgumentsType, BufferType > &ctx ) {
-                proto::eval( boost::proto::left( e ), ctx );
-                proto::eval( boost::proto::right( e ), ctx );
-              }
-            };
+          >::type 
+        > {
+          typedef decltype( self_type::add( std::declval< Expr& >(), std::declval< self_type& >() ) ) result_type;
+          result_type operator()( Expr &e, self_type &ctx ) {
+            return self_type::add( e, ctx );
+          }
+        };
       private:
-        static int as_value( int value, const my_context< ArgumentsType, BufferType > & ) {
+        static int as_value( int value, self_type & ) {
           return value;
         }
-        static unsigned int as_value( unsigned int value, const my_context< ArgumentsType, BufferType > & ) {
+        static unsigned int as_value( unsigned int value, self_type & ) {
           return value;
         }
-        static float as_value( float value, const my_context< ArgumentsType, BufferType > & ) {
+        static float as_value( float value, self_type & ) {
           return value;
         }
-        static double as_value( double value, const my_context< ArgumentsType, BufferType > & ) {
+        static double as_value( double value, self_type & ) {
           return value;
         }
         template < typename Index >
-          static auto as_value( const placeholder< Index >&, const my_context< ArgumentsType, BufferType > &context ) -> decltype( boost::fusion::at< Index >( std::declval< ArgumentsType >() ) ) {
+          static auto as_value( const placeholder< Index >&, self_type &context ) -> decltype( boost::fusion::at< Index >( std::declval< ArgumentsType >() ) ) {
             return boost::fusion::at< Index >( context.arguments );
           }
+        template< typename Expr >
+          static void add(
+            Expr e,
+            self_type &ctx,
+            typename boost::enable_if<
+              boost::mpl::and_<
+                boost::is_same<
+                  void,
+                  decltype( proto::eval( boost::proto::left( e ), ctx ) )
+                >,
+                boost::is_same<
+                  void,
+                  decltype( proto::eval( boost::proto::right( e ), ctx ) )
+                >
+              >
+            >::type* = 0
+          ) {
+            proto::eval( boost::proto::left( e ), ctx );
+            buffer_type temporary_buffer;
+            boost::swap( ctx.origin_buffer, temporary_buffer );
+            proto::eval( boost::proto::right( e ), ctx );
+            simd::operation::add< T, Size >( ctx.origin_buffer, temporary_buffer, ctx.origin_buffer );
+          }
+        template< typename Expr >
+          static auto add(
+            Expr e,
+            self_type &ctx,
+            typename boost::disable_if<
+              boost::mpl::and_<
+                boost::is_same<
+                  void,
+                  decltype( proto::eval( boost::proto::left( e ), ctx ) )
+                >,
+                boost::is_same<
+                  void,
+                  decltype( proto::eval( boost::proto::right( e ), ctx ) )
+                >
+              >
+            >::type* = 0
+          ) -> decltype( proto::eval( boost::proto::left( e ), ctx ) + proto::eval( boost::proto::right( e ), ctx ) ) {
+          return proto::eval( boost::proto::left( e ), ctx ) + proto::eval( boost::proto::right( e ), ctx );
+          }
         const ArgumentsType arguments;
-        BufferType origin_buffer;
-        BufferType *current_buffer;
+        buffer_type origin_buffer;
     };
 }
 
 int main() {
   boost::fusion::vector< int, int, int > args( 1, 2, 10 );
-  stream::my_context< decltype( args ), stream::simd::compiler::vector< float, boost::mpl::size_t< 64 > >::type > ctx( args );
-  boost::proto::eval( boost::proto::lit( 1 ) + 2 + stream::_3, ctx );
+  stream::my_context< decltype( args ), float, boost::mpl::size_t< 64 > > ctx( args );
+  std::cout << boost::proto::eval( boost::proto::lit( 1 ) + 3 + stream::_3, ctx ) << std::endl;
   stream::simd::compiler::vector< float, boost::mpl::size_t< 64 > >::type foo;
   {
     stream::simd::wrapper::vector< float, boost::mpl::size_t< 64 > > foow( foo );
