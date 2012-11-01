@@ -1,3 +1,5 @@
+#include <stdexcept>
+#include <chrono>
 #include <vector>
 #include <array>
 #include <boost/fusion/container/vector.hpp>
@@ -14,56 +16,70 @@
 #include <boost/type_traits.hpp>
 namespace stream {
   namespace simd {
-    namespace arch {
-      template< typename T >
-      struct fast_packed_size : public boost::mpl::size_t< 1 > {};
-#if defined(__AVX__)
-      template<>
-      struct fast_packed_size< float > : public boost::mpl::size_t< 8 > {};
-      template<>
-      struct fast_packed_size< double > : public boost::mpl::size_t< 4 > {};
-#elif defined(__SSE2__)
-      template<>
-      struct fast_packed_size< float > : public boost::mpl::size_t< 4 > {};
-      template<>
-      struct fast_packed_size< double > : public boost::mpl::size_t< 2 > {};
-#elif defined(__SSE__)
-      template<>
-      struct fast_packed_size< float > : public boost::mpl::size_t< 1 > {};
-#endif
-#if defined(__MMX__)
-      template<>
-      struct fast_packed_size< std::int32_t > : public boost::mpl::size_t< 4 > {};
-      template<>
-      struct fast_packed_size< std::uint32_t > : public boost::mpl::size_t< 4 > {};
-#endif
-    }
-
     namespace compiler {
 #if defined( __GNUC__ ) && !defined( __clang__ )
 # if ( __GNUC__ == 4 && __GNUC_MINOR__ >= 2 )
-
+      template< typename T >
+      struct internal_vector {
+        static constexpr bool vectorized = false;
+        typedef T type;
+        static constexpr size_t length = 1;
+      };
+#if defined(__AVX__)
+      template<>
+      struct internal_vector< float > {
+        static constexpr bool vectorized = true;
+        typedef float type __attribute( ( vector_size( 32 ) ) );
+        static constexpr size_t length = 8;
+      };
+      template<>
+      struct internal_vector< double > {
+        static constexpr bool vectorized = true;
+        typedef double type __attribute( ( vector_size( 32 ) ) );
+        static constexpr size_t length = 4;
+      };
+#elif defined(__SSE2__)
+      template<>
+      struct internal_vector< float > {
+        static constexpr bool vectorized = true;
+        typedef float type __attribute( ( vector_size( 16 ) ) );
+        static constexpr size_t length = 4;
+      };
+      template<>
+      struct internal_vector< double > {
+        static constexpr bool vectorized = true;
+        typedef double type __attribute( ( vector_size( 16 ) ) );
+        static constexpr size_t length = 2;
+      };
+#elif defined(__SSE__)
+      template<>
+      struct internal_vector< float > {
+        static constexpr bool vectorized = true;
+        typedef float type __attribute( ( vector_size( 16 ) ) );
+        static constexpr size_t length = 4;
+      };
+#endif
+#if defined(__MMX__)
+      template<>
+      struct internal_vector< int32_t > {
+        static constexpr bool vectorized = true;
+        typedef int32_t type __attribute( ( vector_size( 16 ) ) );
+        static constexpr size_t length = 4;
+      };
+      template<>
+      struct internal_vector< uint32_t > {
+        static constexpr bool vectorized = true;
+        typedef uint32_t type __attribute( ( vector_size( 16 ) ) );
+        static constexpr size_t length = 4;
+      };
+#endif
 #define HERMIT_VECTOR_TYPE_IS_AVAILABLE
-      namespace detail {
-        template< typename T, typename U = boost::mpl::int_< 1 > >
-          struct smallest_pot
-          : public boost::mpl::if_<
-            boost::mpl::bool_< T::value <= U::value >,
-            U,
-            smallest_pot< T, boost::mpl::shift_left< U, boost::mpl::int_< 1 > > >
-            >::type {};
-
-        template< typename T, typename Size >
-          struct vector {
-            typedef T type __attribute( ( vector_size( smallest_pot< Size >::value * sizeof( T ) ) ) );
-          };
-      }
-      template< typename T, typename Size >
-        struct vector {
-          static constexpr unsigned int group_size = Size::value / arch::fast_packed_size< T >::value +
-            ( ( Size::value % arch::fast_packed_size< T >::value ) ? 1 : 0 );
-          static constexpr unsigned int local_size = arch::fast_packed_size< T >::value;
-          typedef typename detail::vector< T, arch::fast_packed_size< T > >::type packed_element;
+      template< typename T, typename Size, bool is_scalar = internal_vector< T >::length == 1 >
+      struct vector {
+          static constexpr unsigned int group_size = Size::value / internal_vector< T >::length +
+            ( ( Size::value % internal_vector< T >::length ) ? 1 : 0 );
+          static constexpr unsigned int local_size = internal_vector< T >::length;
+          typedef typename internal_vector< T >::type packed_element;
           union accessible_element {
             packed_element packed;
             T unpacked[ local_size ];
@@ -72,165 +88,153 @@ namespace stream {
             accessible_element,
             group_size
           > type;
-        };
+        inline static T &get_scalar(
+          type &src,
+          size_t index
+        ) {
+          return src[ index / local_size ].unpacked[ index % local_size ];
+        }
+        inline static const T &get_scalar(
+          const type &src,
+          size_t index
+        ) {
+          return src[ index / local_size ].unpacked[ index % local_size ];
+        }
+      };
+      template< typename T, typename Size >
+      struct vector< T, Size, true > {
+          static constexpr unsigned int group_size = Size::value;
+          static constexpr unsigned int local_size = 1;
+          typedef std::array<
+            T,
+            group_size
+          > type;
+        inline static T &get_scalar(
+          type &src,
+          size_t index
+        ) {
+          return src[ index ];
+        }
+        inline static const T &get_scalar(
+          const type &src,
+          size_t index
+        ) {
+          return src[ index ];
+        }
+      };
 #endif
 #endif
+#if defined( __clang__ )
+      template< typename T >
+      struct internal_vector {
+        static constexpr bool vectorized = false;
+        typedef T type;
+        static constexpr size_t length = 1;
+      };
+#if defined(__AVX__)
+      template<>
+      struct internal_vector< float > {
+        static constexpr bool vectorized = true;
+        typedef float type __attribute__( ( __vector_size__( 32 ) ) );
+        static constexpr size_t length = 8;
+      };
+      template<>
+      struct internal_vector< double > {
+        static constexpr bool vectorized = true;
+        typedef double type __attribute__( ( __vector_size__( 32 ) ) );
+        static constexpr size_t length = 4;
+      };
+#elif defined(__SSE2__)
+      template<>
+      struct internal_vector< float > {
+        static constexpr bool vectorized = true;
+        typedef float type __attribute__( ( __vector_size__( 16 ) ) );
+        static constexpr size_t length = 4;
+      };
+      template<>
+      struct internal_vector< double > {
+        static constexpr bool vectorized = true;
+        typedef double type __attribute__( ( __vector_size__( 16 ) ) );
+        static constexpr size_t length = 2;
+      };
+#elif defined(__SSE__)
+      template<>
+      struct internal_vector< float > {
+        static constexpr bool vectorized = true;
+        typedef float type __attribute__( ( __vector_size__( 16 ) ) );
+        static constexpr size_t length = 4;
+      };
+#endif
+#if defined(__MMX__)
+      template<>
+      struct internal_vector< int32_t > {
+        static constexpr bool vectorized = true;
+        typedef int32_t type __attribute__( ( __vector_size__( 16 ) ) );
+        static constexpr size_t length = 4;
+      };
+      template<>
+      struct internal_vector< uint32_t > {
+        static constexpr bool vectorized = true;
+        typedef uint32_t type __attribute__( ( __vector_size__( 16 ) ) );
+        static constexpr size_t length = 4;
+      };
+#endif
+#define HERMIT_VECTOR_TYPE_IS_AVAILABLE
+      template< typename T, typename Size, bool is_scalar = internal_vector< T >::length == 1 >
+      struct vector {
+          static constexpr unsigned int group_size = Size::value / internal_vector< T >::length +
+            ( ( Size::value % internal_vector< T >::length ) ? 1 : 0 );
+          static constexpr unsigned int local_size = internal_vector< T >::length;
+          typedef typename internal_vector< T >::type packed_element;
+          union accessible_element {
+            packed_element packed;
+            T unpacked[ local_size ];
+          };
+          typedef std::array<
+            accessible_element,
+            group_size
+          > type;
+        inline static T &get_scalar(
+          type &src,
+          size_t index
+        ) {
+          return src[ index / local_size ].unpacked[ index % local_size ];
+        }
+        inline static const T &get_scalar(
+          const type &src,
+          size_t index
+        ) {
+          return src[ index / local_size ].unpacked[ index % local_size ];
+        }
+      };
+      template< typename T, typename Size >
+      struct vector< T, Size, true > {
+          static constexpr unsigned int group_size = Size::value;
+          static constexpr unsigned int local_size = 1;
+          typedef std::array<
+            T,
+            group_size
+          > type;
+        inline static T &get_scalar(
+          type &src,
+          size_t index
+        ) {
+          return src[ index ];
+        }
+        inline static const T &get_scalar(
+          const type &src,
+          size_t index
+        ) {
+          return src[ index ];
+        }
+      };
+#endif
     }
-    namespace operation {
-      template<typename T, typename Size>
-      T &get_scalar(
-        typename compiler::vector< T, Size >::type &src,
-        size_t index
-      ) {
-        return src[ index / compiler::vector< T, Size >::local_size ].unpacked[ index % compiler::vector< T, Size >::local_size ];
-      }
-      template<typename T, typename Size>
-      const T &get_scalar(
-        const typename compiler::vector< T, Size >::type &src,
-        size_t index
-      ) {
-        return src[ index / compiler::vector< T, Size >::local_size ].unpacked[ index % compiler::vector< T, Size >::local_size ];
-      }
-      template<typename T, typename Size>
-      void add(
-        typename compiler::vector< T, Size >::type &dest,
-        const typename compiler::vector< T, Size >::type &left,
-        const typename compiler::vector< T, Size >::type &right
-      ) {
-        for( unsigned int index = 0; index != compiler::vector< T, Size >::group_size; ++index )
-          dest[ index ].packed = left[ index ].packed + right[ index ].packed;
-      }
-      template<typename T, typename Size>
-      void sub(
-        typename compiler::vector< T, Size >::type &dest,
-        const typename compiler::vector< T, Size >::type &left,
-        const typename compiler::vector< T, Size >::type &right
-      ) {
-        for( unsigned int index = 0; index != compiler::vector< T, Size >::group_size; ++index )
-          dest[ index ].packed = left[ index ].packed - right[ index ].packed;
-      }
-      template<typename T, typename Size>
-      void mul(
-        typename compiler::vector< T, Size >::type &dest,
-        const typename compiler::vector< T, Size >::type &left,
-        const typename compiler::vector< T, Size >::type &right
-      ) {
-        for( unsigned int index = 0; index != compiler::vector< T, Size >::group_size; ++index )
-          dest[ index ].packed = left[ index ].packed * right[ index ].packed;
-      }
-      template<typename T, typename Size>
-      void div(
-        typename compiler::vector< T, Size >::type &dest,
-        const typename compiler::vector< T, Size >::type &left,
-        const typename compiler::vector< T, Size >::type &right
-      ) {
-        for( unsigned int index = 0; index != compiler::vector< T, Size >::group_size; ++index )
-          dest[ index ].packed = left[ index ].packed / right[ index ].packed;
-      }
-    }
-    namespace wrapper {
-    template< typename T, typename Size >
-    class const_vector {
-      public:
-        static const size_t local_size_ = arch::fast_packed_size< T >::value;
-        class const_iterator : public boost::iterator_facade<
-          const_iterator,
-          const T&,
-          boost::random_access_traversal_tag
-        > {
-        public:
-          typedef const_iterator this_type;
-          typedef typename compiler::vector< T, Size >::type base_type;
-          const_iterator( const base_type *base_, size_t index_ = 0 ) : base( base_ ), index( index_ ) {}
-          const T& dereference() const {
-            return operation::get_scalar< T, Size >( *base, index );
-          }
-          bool equal( const this_type &comp ) const {
-            return base == comp.base && index == comp.index;
-          }
-          void increment() {
-            ++index;
-          }
-          void decrement() {
-            --index;
-          }
-          void advance( int distance ) {
-            index += distance;
-          }
-          ptrdiff_t distance_to( const this_type &comp ) const {
-            return comp.index - index;
-          }
-        private:
-          const base_type *base;
-          size_t index;
-        };
-        typedef const_vector< T, Size > self_type;
-        typedef typename compiler::vector< T, Size >::type base_type;
-        typedef T value_type;
-        typedef size_t size_type;
-        typedef ptrdiff_t difference_type;
-        typedef const T& reference;
-        typedef const T& const_reference;
-        typedef const T* pointer;
-        typedef const T* const_pointer;
-        typedef const_iterator iterator;
-        typedef boost::reverse_iterator< iterator > reverse_iterator;
-        typedef boost::reverse_iterator< const_iterator > const_reverse_iterator;
-        const_vector( const base_type &value_ ) : value( value_ ) {}
-        const_reference operator[]( unsigned int index ) const {
-          return operation::get_scalar< T, Size >( value, index );
-        }
-        const_reference at( unsigned int index ) const {
-          if( index >= size() )
-            throw std::out_of_range();
-          return operation::get_scalar< T, Size >( value, index );
-        }
-        const_reference front() const {
-          return get_scalar( value, 0 );
-        }
-        const_reference back() const {
-          return get_scalar( value, size() - 1 );
-        }
-        const_iterator begin() const {
-          return const_iterator( &value, 0 );
-        }
-        const_iterator end() const {
-          return const_iterator( &value, size() );
-        }
-        const_reverse_iterator rbegin() const {
-          return const_reverse_iterator( const_iterator( &value, size() ) );
-        }
-        const_reverse_iterator rend() const {
-          return const_reverse_iterator( const_iterator( &value, 0 ) );
-        }
-        const_iterator cbegin() const {
-          return const_iterator( &value, 0 );
-        }
-        const_iterator cend() const {
-          return const_iterator( &value, size() );
-        }
-        const_reverse_iterator crbegin() const {
-          return const_reverse_iterator( const_iterator( &value, size() ) );
-        }
-        const_reverse_iterator crend() const {
-          return const_reverse_iterator( const_iterator( &value, 0 ) );
-        }
-        static size_type size() {
-          return Size::value;
-        }
-        static bool empty() {
-          return Size::value == 0;
-        }
-        static size_type max_size() {
-          return Size::value;
-        }
-      private:
-        const base_type &value;
-    };
+    namespace container {
     template< typename T, typename Size >
     class vector {
       public:
-        static const size_t local_size_ = arch::fast_packed_size< T >::value;
+        static const size_t local_size_ = compiler::internal_vector< T >::length;
         class const_iterator : public boost::iterator_facade<
           const_iterator,
           const T&,
@@ -239,23 +243,23 @@ namespace stream {
         public:
           typedef const_iterator this_type;
           typedef const typename compiler::vector< T, Size >::type base_type;
-          const_iterator( base_type *base_, int index_ = 0 ) : base( base_ ), index( index_ ) {}
-          const T& dereference() const {
-            return operation::get_scalar< T, Size >( *base, index );
+          inline const_iterator( base_type *base_, int index_ = 0 ) : base( base_ ), index( index_ ) {}
+          inline const T& dereference() const {
+            return compiler::vector< T, Size >::get_scalar( *base, index );
           }
-          bool equal( const this_type &comp ) const {
+          inline bool equal( const this_type &comp ) const {
             return base == comp.base && index == comp.index;
           }
-          void increment() {
+          inline void increment() {
             ++index;
           }
-          void decrement() {
+          inline void decrement() {
             --index;
           }
-          void advance( int distance ) {
+          inline void advance( int distance ) {
             index += distance;
           }
-          ptrdiff_t distance_to( const this_type &comp ) const {
+          inline ptrdiff_t distance_to( const this_type &comp ) const {
             return comp.index - index;
           }
         private:
@@ -270,26 +274,26 @@ namespace stream {
         public:
           typedef iterator this_type;
           typedef typename compiler::vector< T, Size >::type base_type;
-          iterator( base_type *base_, int index_ = 0 ) : base( base_ ), index( index_ ) {}
-          T& dereference() const {
-            return operation::get_scalar< T, Size >( *base, index );
+          inline iterator( base_type *base_, int index_ = 0 ) : base( base_ ), index( index_ ) {}
+          inline T& dereference() const {
+            return compiler::vector< T, Size >::get_scalar( *base, index );
           }
-          bool equal( const this_type &comp ) const {
+          inline bool equal( const this_type &comp ) const {
             return base == comp.base && index == comp.index;
           }
-          void increment() {
+          inline void increment() {
             ++index;
           }
-          void decrement() {
+          inline void decrement() {
             --index;
           }
-          void advance( int distance ) {
+          inline void advance( int distance ) {
             index += distance;
           }
-          ptrdiff_t distance_to( const this_type &comp ) const {
+          inline ptrdiff_t distance_to( const this_type &comp ) const {
             return comp.index - index;
           }
-          operator const_iterator () const {
+          inline operator const_iterator () const {
             return const_iterator( base, index );
           }
         private:
@@ -307,86 +311,313 @@ namespace stream {
         typedef const T* const_pointer;
         typedef boost::reverse_iterator< iterator > reverse_iterator;
         typedef boost::reverse_iterator< const_iterator > const_reverse_iterator;
-        vector( base_type &value_ ) : value( value_ ) {}
-        reference operator[]( unsigned int index ) {
-          return operation::get_scalar< T, Size >( value, index );
+        typedef typename base_type::iterator vector_iterator;
+        typedef typename base_type::const_iterator const_vector_iterator;
+        typedef typename base_type::reverse_iterator reverse_vector_iterator;
+        typedef typename base_type::const_reverse_iterator const_reverse_vector_iterator;
+        inline vector() {}
+        inline vector( const self_type &src ) : value( src.value ) {
         }
-        const_reference operator[]( unsigned int index ) const {
-          return operation::get_scalar< T, Size >( value, index );
+        inline vector( self_type &&src ) : value( src.value ) {
         }
-        reference at( unsigned int index ) {
+        inline self_type &operator=( const self_type &src ) {
+          value = src.value;
+          return *this;
+        }
+        inline self_type &operator=( self_type &&src ) {
+          value = src.value;
+          return *this;
+        }
+        template< typename Iterator >
+        inline vector( Iterator begin, Iterator end ) {
+          std::copy( begin, end, begin() );
+        }
+        inline vector( const std::initializer_list< T > &list ) {
+          if( list.size() > size() )
+            throw std::range_error( "The initializer list is too big." );
+          std::copy( list.begin(), list.end(), begin() );
+        }
+        inline reference operator[]( unsigned int index ) {
+          return compiler::vector< T, Size >::get_scalar( value, index );
+        }
+        inline const_reference operator[]( unsigned int index ) const {
+          return compiler::vector< T, Size >::get_scalar( value, index );
+        }
+        inline reference at( unsigned int index ) {
           if( index >= size() )
-            throw std::out_of_range();
-          return operation::get_scalar< T, Size >( value, index );
+            throw std::out_of_range( "The index is larger than vector size." );
+          return compiler::vector< T, Size >::get_scalar( value, index );
         }
-        const_reference at( unsigned int index ) const {
+        inline const_reference at( unsigned int index ) const {
           if( index >= size() )
-            throw std::out_of_range();
-          return operation::get_scalar< T, Size >( value, index );
+            throw std::out_of_range( "The index is larger than vector size." );
+          return compiler::vector< T, Size >::get_scalar( value, index );
         }
-        reference front() {
-          return get_scalar( value, 0 );
+        inline reference front() {
+          return compiler::vector< T, Size >::get_scalar( value, 0 );
         }
-        reference back() {
-          return get_scalar( value, size() - 1 );
+        inline reference back() {
+          return compiler::vector< T, Size >::get_scalar( value, size() - 1 );
         }
-        const_reference front() const {
-          return get_scalar( value, 0 );
+        inline const_reference front() const {
+          return compiler::vector< T, Size >::get_scalar( value, 0 );
         }
-        const_reference back() const {
-          return get_scalar( value, size() - 1 );
+        inline const_reference back() const {
+          return compiler::vector< T, Size >::get_scalar( value, size() - 1 );
         }
-        iterator begin() {
+        inline iterator begin() {
           return iterator( &value, 0 );
         }
-        const_iterator begin() const {
+        inline const_iterator begin() const {
           return const_iterator( &value, 0 );
         }
-        reverse_iterator rbegin() {
+        inline reverse_iterator rbegin() {
           return reverse_iterator( iterator( &value, size() ) );
         }
-        const_reverse_iterator rbegin() const {
+        inline const_reverse_iterator rbegin() const {
           return const_reverse_iterator( const_iterator( &value, size() ) );
         }
-        const_iterator cbegin() const {
+        inline const_iterator cbegin() const {
           return const_iterator( &value, 0 );
         }
-        const_reverse_iterator crbegin() const {
+        inline const_reverse_iterator crbegin() const {
           return const_reverse_iterator( const_iterator( &value, size() ) );
         }
-        iterator end() {
+        inline iterator end() {
           return iterator( &value, size() );
         }
-        const_iterator end() const {
+        inline const_iterator end() const {
           return const_iterator( &value, size() );
         }
-        reverse_iterator rend() {
+        inline reverse_iterator rend() {
           return reverse_iterator( iterator( &value, 0 ) );
         }
-        const_reverse_iterator rend() const {
+        inline const_reverse_iterator rend() const {
           return const_reverse_iterator( const_iterator( &value, 0 ) );
         }
-        const_iterator cend() const {
+        inline const_iterator cend() const {
           return const_iterator( &value, size() );
         }
-        const_reverse_iterator crend() const {
+        inline const_reverse_iterator crend() const {
           return const_reverse_iterator( const_iterator( &value, 0 ) );
         }
-        static size_type size() {
+        inline vector_iterator vbegin() {
+          return value.begin();
+        }
+        inline const_vector_iterator vbegin() const {
+          return value.begin();
+        }
+        inline vector_iterator vend() {
+          return value.end();
+        }
+        inline const_vector_iterator vend() const {
+          return value.end();
+        }
+        inline reverse_vector_iterator rvbegin() {
+          return value.rbegin();
+        }
+        inline const_reverse_vector_iterator rvbegin() const {
+          return value.rbegin();
+        }
+        inline reverse_vector_iterator rvend() {
+          return value.rend();
+        }
+        inline const_reverse_vector_iterator rvend() const {
+          return value.rend();
+        }
+        inline const_vector_iterator cvbegin() const {
+          return value.cbegin();
+        }
+        inline const_vector_iterator cvend() const {
+          return value.cend();
+        }
+        inline const_reverse_vector_iterator crvbegin() const {
+          return value.crbegin();
+        }
+        inline const_reverse_vector_iterator crvend() const {
+          return value.crend();
+        }
+        inline static size_type size() {
           return Size::value;
         }
-        static size_type empty() {
+        inline static size_type global_size() {
+          return Size::value;
+        }
+        inline static size_type group_size() {
+          return compiler::vector< T, Size >::group_size;
+        }
+        inline static size_type local_size() {
+          return compiler::vector< T, Size >::local_size;
+        }
+        inline static size_type empty() {
           return Size::value == 0;
         }
-        static size_type max_size() {
+        inline static size_type max_size() {
           return Size::value;
         }
-        operator const_vector< T, Size > () const {
-          return const_vector< T, Size >( value );
+        base_type &get() {
+          return value;
+        }
+        const base_type &get() const {
+          return value;
         }
       private:
-        base_type &value;
+        base_type value;
       };
+      template< typename T, typename Size >
+      void swap( vector< T, Size > &left, vector< T, Size > &right ) {
+        left.get().swap( right.get() );
+      }
+    }
+    namespace operation {
+#define HERMIT_STREAM_SIMD_OPERATION_3( name, oper ) \
+      template<typename T, typename Size> \
+      inline void name ( \
+        typename container::vector< T, Size > &dest, \
+        const container::vector< T, Size > &left, \
+        const container::vector< T, Size > &right \
+      ) { \
+        typename container::vector< T, Size >::vector_iterator dest_cur = dest.vbegin(); \
+        typename container::vector< T, Size >::const_vector_iterator left_cur = left.vbegin(); \
+        typename container::vector< T, Size >::const_vector_iterator right_cur = right.vbegin(); \
+        const typename container::vector< T, Size >::vector_iterator dest_end = dest.vend(); \
+        for( ; dest_cur != dest_end; ++dest_cur, ++left_cur, ++right_cur ) \
+          dest_cur->packed = left_cur->packed oper right_cur->packed; \
+      } \
+      template<typename T, typename Size> \
+      inline void name ( \
+        container::vector< T, Size > &dest, \
+        const container::vector< T, Size > &left, \
+        const T &right \
+      ) { \
+        typename compiler::vector< T, Size >::type::value_type right_vec; \
+        for( size_t index = 0; index != compiler::internal_vector< T >::length; ++index ) \
+          right_vec.unpacked[ index ] = right; \
+        typename container::vector< T, Size >::vector_iterator dest_cur = dest.vbegin(); \
+        typename container::vector< T, Size >::const_vector_iterator left_cur = left.vbegin(); \
+        const typename container::vector< T, Size >::vector_iterator dest_end = dest.vend(); \
+        for( ; dest_cur != dest_end; ++dest_cur, ++left_cur ) \
+          dest_cur->packed = left_cur->packed oper right_vec.packed; \
+      } \
+      template<typename T, typename Size> \
+      inline void name ( \
+        typename container::vector< T, Size > &dest, \
+        const T &left, \
+        const typename container::vector< T, Size > &right \
+      ) { \
+        typename compiler::vector< T, Size >::type::value_type left_vec; \
+        for( size_t index = 0; index != compiler::internal_vector< T >::length; ++index ) \
+          left_vec.unpacked[ index ] = left; \
+        typename container::vector< T, Size >::vector_iterator dest_cur = dest.vbegin(); \
+        typename container::vector< T, Size >::const_vector_iterator right_cur = right.vbegin(); \
+        const typename container::vector< T, Size >::vector_iterator dest_end = dest.vend(); \
+        for( ; dest_cur != dest_end; ++dest_cur, ++right_cur ) \
+          dest_cur->packed = left_vec.packed oper right_cur->packed; \
+      }
+
+#define HERMIT_STREAM_SIMD_OPERATION_2( name, oper ) \
+      template<typename T, typename Size> \
+      inline void name ( \
+        typename container::vector< T, Size > &left, \
+        const typename container::vector< T, Size > &right \
+      ) { \
+        typename container::vector< T, Size >::vector_iterator left_cur = left.vbegin(); \
+        typename container::vector< T, Size >::const_vector_iterator right_cur = right.vbegin(); \
+        const typename container::vector< T, Size >::vector_iterator left_end = left.vend(); \
+        for( ; left_cur != left_end; ++left_cur, ++right_cur ) \
+          left_cur->packed oper right_cur->packed; \
+      } \
+      template<typename T, typename Size> \
+      inline void name ( \
+        typename container::vector< T, Size > &left, \
+        const T &right \
+      ) { \
+        typename compiler::vector< T, Size >::type::value_type right_vec; \
+        for( size_t index = 0; index != compiler::internal_vector< T >::length; ++index ) \
+          right_vec.unpacked[ index ] = right; \
+        typename container::vector< T, Size >::vector_iterator left_cur = left.vbegin(); \
+        const typename container::vector< T, Size >::vector_iterator left_end = left.vend(); \
+        for( ; left_cur != left_end; ++left_cur ) \
+          left_cur->packed oper right.packed; \
+      }
+
+#define HERMIT_STREAM_SIMD_OPERATION_1PRE( name, oper ) \
+      template<typename T, typename Size> \
+      inline void name ( \
+        typename container::vector< T, Size > &dest, \
+        typename container::vector< T, Size > &left \
+      ) { \
+        typename container::vector< T, Size >::vector_iterator left_cur = left.vbegin(); \
+        typename container::vector< T, Size >::vector_iterator dest_cur = dest.vbegin(); \
+        const typename container::vector< T, Size >::vector_iterator left_end = left.vend(); \
+        for( ; left_cur != left_end; ++dest_cur, ++left_cur ) \
+          dest_cur->packed = oper left_cur->packed; \
+      } \
+      template<typename T, typename Size> \
+      inline void name ( \
+        typename container::vector< T, Size > &left \
+      ) { \
+        typename container::vector< T, Size >::vector_iterator left_cur = left.vbegin(); \
+        const typename container::vector< T, Size >::vector_iterator left_end = left.vend(); \
+        for( ; left_cur != left_end; ++left_cur ) \
+          oper left_cur->packed; \
+      }
+
+#define HERMIT_STREAM_SIMD_OPERATION_1POST( name, oper ) \
+      template<typename T, typename Size> \
+      inline void name ( \
+        typename container::vector< T, Size > &dest, \
+        typename container::vector< T, Size > &left \
+      ) { \
+        typename container::vector< T, Size >::vector_iterator left_cur = left.vbegin(); \
+        typename container::vector< T, Size >::vector_iterator dest_cur = dest.vbegin(); \
+        const typename container::vector< T, Size >::vector_iterator left_end = left.vend(); \
+        for( ; left_cur != left_end; ++dest_cur, ++left_cur ) \
+          dest_cur->packed = left_cur->packed oper; \
+      } \
+      template<typename T, typename Size> \
+      inline void name ( \
+        typename container::vector< T, Size > &left \
+      ) { \
+        typename container::vector< T, Size >::vector_iterator left_cur = left.vbegin(); \
+        const typename container::vector< T, Size >::vector_iterator left_end = left.vend(); \
+        for( ; left_cur != left_end; ++left_cur ) \
+          left_cur->packed oper; \
+      }
+
+HERMIT_STREAM_SIMD_OPERATION_3( add, + )
+HERMIT_STREAM_SIMD_OPERATION_2( add, += )
+HERMIT_STREAM_SIMD_OPERATION_3( sub, - )
+HERMIT_STREAM_SIMD_OPERATION_2( sub, -= )
+HERMIT_STREAM_SIMD_OPERATION_3( mul, * )
+HERMIT_STREAM_SIMD_OPERATION_2( mul, *= )
+HERMIT_STREAM_SIMD_OPERATION_3( div, / )
+HERMIT_STREAM_SIMD_OPERATION_2( div, /= )
+HERMIT_STREAM_SIMD_OPERATION_3( eq, == )
+HERMIT_STREAM_SIMD_OPERATION_3( neq, != )
+HERMIT_STREAM_SIMD_OPERATION_3( gt, > )
+HERMIT_STREAM_SIMD_OPERATION_3( lt, < )
+HERMIT_STREAM_SIMD_OPERATION_3( ge, >= )
+HERMIT_STREAM_SIMD_OPERATION_3( le, <= )
+HERMIT_STREAM_SIMD_OPERATION_3( rshift, >> )
+HERMIT_STREAM_SIMD_OPERATION_2( rshift, >>= )
+HERMIT_STREAM_SIMD_OPERATION_3( lshift, << )
+HERMIT_STREAM_SIMD_OPERATION_2( lshift, <<= )
+HERMIT_STREAM_SIMD_OPERATION_3( and_, & )
+HERMIT_STREAM_SIMD_OPERATION_2( and_, &= )
+HERMIT_STREAM_SIMD_OPERATION_3( or_, | )
+HERMIT_STREAM_SIMD_OPERATION_2( or_, |= )
+HERMIT_STREAM_SIMD_OPERATION_3( xor_, ^ )
+HERMIT_STREAM_SIMD_OPERATION_2( xor_, ^= )
+HERMIT_STREAM_SIMD_OPERATION_1PRE( inc_pre, ++ )
+HERMIT_STREAM_SIMD_OPERATION_1PRE( dec_pre, -- )
+HERMIT_STREAM_SIMD_OPERATION_1POST( inc_post, ++ )
+HERMIT_STREAM_SIMD_OPERATION_1POST( dec_post, -- )
+HERMIT_STREAM_SIMD_OPERATION_1PRE( pos, + )
+HERMIT_STREAM_SIMD_OPERATION_1PRE( neg, - )
+HERMIT_STREAM_SIMD_OPERATION_1PRE( not_, ~ )
+    }
+    namespace wrapper {
     }
   }
 
@@ -407,8 +638,153 @@ namespace stream {
   template< typename ArgumentsType, typename T, typename Size >
     class my_context {
       public:
-        typedef typename stream::simd::compiler::vector< T, Size >::type buffer_type;
+        typedef typename simd::container::vector< T, Size > buffer_type;
         typedef my_context< ArgumentsType, T, Size > self_type;
+      private:
+        static int as_value( int value, self_type & ) {
+          return value;
+        }
+        static unsigned int as_value( unsigned int value, self_type & ) {
+          return value;
+        }
+        static float as_value( float value, self_type & ) {
+          return value;
+        }
+        static double as_value( double value, self_type & ) {
+          return value;
+        }
+        static void as_value( simd::container::vector< T, Size > value, self_type &ctx ) {
+          ctx.origin_buffer = value;
+        }
+        template < typename Index >
+          static auto as_value( const placeholder< Index >&, self_type &context ) -> decltype( boost::fusion::at< Index >( std::declval< ArgumentsType >() ) ) {
+            return boost::fusion::at< Index >( context.arguments );
+          }
+        template< typename Expr >
+        struct both_are_vector : public boost::mpl::and_<
+          boost::is_same<
+            void,
+            decltype( proto::eval( boost::proto::left( std::declval< Expr& >() ), std::declval< my_context& >() ) )
+          >,
+          boost::is_same<
+            void,
+            decltype( proto::eval( boost::proto::right( std::declval< Expr& >() ), std::declval< my_context& >() ) )
+          >
+        > {};
+        template< typename Expr >
+        struct only_left_is_vector : public boost::mpl::and_<
+          boost::is_same<
+            void,
+            decltype( proto::eval( boost::proto::left( std::declval< Expr& >() ), std::declval< my_context& >() ) )
+          >,
+          boost::mpl::not_<
+            boost::is_same<
+              void,
+              decltype( proto::eval( boost::proto::right( std::declval< Expr& >() ), std::declval< my_context& >() ) )
+            >
+          >
+        > {};
+        template< typename Expr >
+        struct only_right_is_vector : public boost::mpl::and_<
+          boost::mpl::not_<
+            boost::is_same<
+              void,
+              decltype( proto::eval( boost::proto::left( std::declval< Expr& >() ), std::declval< my_context& >() ) )
+            >
+          >,
+          boost::is_same<
+            void,
+            decltype( proto::eval( boost::proto::right( std::declval< Expr& >() ), std::declval< my_context& >() ) )
+          >
+        > {};
+        template< typename Expr >
+        struct neither_is_vector : public boost::mpl::and_<
+          boost::mpl::not_<
+            boost::is_convertible<
+              void,
+              decltype( proto::eval( boost::proto::left( std::declval< Expr& >() ), std::declval< my_context& >() ) )
+            >
+          >,
+          boost::mpl::not_<
+            boost::is_convertible<
+              void,
+              decltype( proto::eval( boost::proto::right( std::declval< Expr& >() ), std::declval< my_context& >() ) )
+            >
+          >
+        > {};
+        template< typename Expr >
+          static void add(
+            Expr &e, self_type &ctx,
+            typename boost::enable_if< both_are_vector< Expr > >::type* = 0
+          ) {
+            proto::eval( boost::proto::left( e ), ctx );
+            buffer_type temporary_buffer;
+            boost::swap( ctx.origin_buffer, temporary_buffer );
+            proto::eval( boost::proto::right( e ), ctx );
+            simd::operation::add< T, Size >( ctx.origin_buffer, temporary_buffer, ctx.origin_buffer );
+          }
+        template< typename Expr >
+          static void add(
+            Expr &e, self_type &ctx,
+            typename boost::enable_if< only_left_is_vector< Expr > >::type* = 0
+          ) {
+            proto::eval( boost::proto::left( e ), ctx );
+            simd::operation::add< T, Size >( ctx.origin_buffer, ctx.origin_buffer, proto::eval( boost::proto::right( e ), ctx ) );
+          }
+        template< typename Expr >
+          static void add(
+            Expr &e, self_type &ctx,
+            typename boost::enable_if< only_right_is_vector< Expr > >::type* = 0
+          ){
+            proto::eval( boost::proto::right( e ), ctx );
+            simd::operation::add< T, Size >( ctx.origin_buffer, proto::eval( boost::proto::left( e ), ctx ), ctx.origin_buffer );
+          }
+        template< typename Expr >
+          static auto add(
+            Expr &e, self_type &ctx,
+            typename boost::enable_if< neither_is_vector< Expr > >::type* = 0
+          ) -> decltype( proto::eval( boost::proto::left( e ), ctx ) + proto::eval( boost::proto::right( e ), ctx ) ) {
+          return proto::eval( boost::proto::left( e ), ctx ) + proto::eval( boost::proto::right( e ), ctx );
+          }
+
+
+        template< typename Expr >
+          static void sub(
+            Expr e, self_type &ctx,
+            typename boost::enable_if< both_are_vector< Expr > >::type* = 0
+          ) {
+            proto::eval( boost::proto::left( e ), ctx );
+            buffer_type temporary_buffer;
+            boost::swap( ctx.origin_buffer, temporary_buffer );
+            proto::eval( boost::proto::right( e ), ctx );
+            simd::operation::sub< T, Size >( ctx.origin_buffer, temporary_buffer, ctx.origin_buffer );
+          }
+        template< typename Expr >
+          static void sub(
+            Expr e, self_type &ctx,
+            typename boost::enable_if< only_left_is_vector< Expr > >::type* = 0
+          ) {
+            proto::eval( boost::proto::right( e ), ctx );
+            simd::operation::sub< T, Size >( ctx.origin_buffer, proto::eval( boost::proto::left( e ), ctx ), ctx.origin_buffer );
+          }
+        template< typename Expr >
+          static void sub(
+            Expr e, self_type &ctx,
+            typename boost::enable_if< only_right_is_vector< Expr > >::type* = 0
+          ) {
+            proto::eval( boost::proto::left( e ), ctx );
+            simd::operation::sub< T, Size >( ctx.origin_buffer, ctx.origin_buffer, proto::eval( boost::proto::right( e ), ctx ) );
+          }
+        template< typename Expr >
+          static auto sub(
+            Expr e, self_type &ctx,
+            typename boost::enable_if< neither_is_vector< Expr > >::type* = 0
+          ) -> decltype( proto::eval( boost::proto::left( e ), ctx ) + proto::eval( boost::proto::right( e ), ctx ) ) {
+          return proto::eval( boost::proto::left( e ), ctx ) - proto::eval( boost::proto::right( e ), ctx );
+          }
+      
+      
+      public:
         my_context( const ArgumentsType &args ) : arguments( args ) {}
         template< typename Expr, typename  Enable = void > struct eval {};
         template<
@@ -437,74 +813,64 @@ namespace stream {
             return self_type::add( e, ctx );
           }
         };
+        template<
+          class Expr
+          > struct eval<
+          Expr,
+          typename boost::enable_if<
+            proto::matches< Expr, proto::minus< proto::_, proto::_ > >
+          >::type 
+        > {
+          typedef decltype( self_type::sub( std::declval< Expr& >(), std::declval< self_type& >() ) ) result_type;
+          result_type operator()( Expr &e, self_type &ctx ) {
+            return self_type::sub( e, ctx );
+          }
+        };
       private:
-        static int as_value( int value, self_type & ) {
-          return value;
-        }
-        static unsigned int as_value( unsigned int value, self_type & ) {
-          return value;
-        }
-        static float as_value( float value, self_type & ) {
-          return value;
-        }
-        static double as_value( double value, self_type & ) {
-          return value;
-        }
-        template < typename Index >
-          static auto as_value( const placeholder< Index >&, self_type &context ) -> decltype( boost::fusion::at< Index >( std::declval< ArgumentsType >() ) ) {
-            return boost::fusion::at< Index >( context.arguments );
-          }
-        template< typename Expr >
-          static void add(
-            Expr e,
-            self_type &ctx,
-            typename boost::enable_if<
-              boost::mpl::and_<
-                boost::is_same<
-                  void,
-                  decltype( proto::eval( boost::proto::left( e ), ctx ) )
-                >,
-                boost::is_same<
-                  void,
-                  decltype( proto::eval( boost::proto::right( e ), ctx ) )
-                >
-              >
-            >::type* = 0
-          ) {
-            proto::eval( boost::proto::left( e ), ctx );
-            buffer_type temporary_buffer;
-            boost::swap( ctx.origin_buffer, temporary_buffer );
-            proto::eval( boost::proto::right( e ), ctx );
-            simd::operation::add< T, Size >( ctx.origin_buffer, temporary_buffer, ctx.origin_buffer );
-          }
-        template< typename Expr >
-          static auto add(
-            Expr e,
-            self_type &ctx,
-            typename boost::disable_if<
-              boost::mpl::and_<
-                boost::is_same<
-                  void,
-                  decltype( proto::eval( boost::proto::left( e ), ctx ) )
-                >,
-                boost::is_same<
-                  void,
-                  decltype( proto::eval( boost::proto::right( e ), ctx ) )
-                >
-              >
-            >::type* = 0
-          ) -> decltype( proto::eval( boost::proto::left( e ), ctx ) + proto::eval( boost::proto::right( e ), ctx ) ) {
-          return proto::eval( boost::proto::left( e ), ctx ) + proto::eval( boost::proto::right( e ), ctx );
-          }
         const ArgumentsType arguments;
         buffer_type origin_buffer;
     };
 }
 
 int main() {
-  boost::fusion::vector< int, int, int > args( 1, 2, 10 );
+  stream::simd::container::vector< float, boost::mpl::size_t< 64 > > woo;
+  boost::fusion::vector< int, int, int, stream::simd::container::vector< float, boost::mpl::size_t< 64 > > > args( 1, 2, 10, woo );
   stream::my_context< decltype( args ), float, boost::mpl::size_t< 64 > > ctx( args );
-  std::cout << boost::proto::eval( boost::proto::lit( 1 ) + 3 + stream::_3, ctx ) << std::endl;
+  boost::proto::eval( boost::proto::lit( 1 ) + woo, ctx );
+  stream::simd::compiler::vector< float, boost::mpl::size_t< 64 > >::type foo;
+  {
+    stream::simd::container::vector< float, boost::mpl::size_t< 16384 > > vec1 = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+    stream::simd::container::vector< float, boost::mpl::size_t< 16384 > > vec2 = { 5, 4, 3, 2, 1, 0, -1, -2, -3, -4 };
+    stream::simd::container::vector< float, boost::mpl::size_t< 16384 > > vec3 = { 2, 5, 8, 1, 4, 9, 0, 3, 6, 7 };
+    auto start = std::chrono::high_resolution_clock::now();
+    for( int count = 0; count != 100000; ++count ) {
+      stream::simd::operation::add( vec1, vec2, vec3 );
+      stream::simd::operation::sub( vec2, vec2, vec1 );
+    }
+    auto end = std::chrono::high_resolution_clock::now();
+    double d = std::chrono::duration<double>(end - start).count();
+    std::cout << d << std::endl;
+    std::cout << "debug: " << vec1[ 3 ] << std::endl;
+    std::cout << "debug: " << vec2[ 3 ] << std::endl;
+  }
+  { 
+    std::array< float, 16384 > vec3 = {{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }};
+    std::array< float, 16384 > vec4 = {{ 5, 4, 3, 2, 1, 0, -1, -2, -3, -4 }};
+    std::array< float, 16384 > vec5 = {{ 2, 5, 8, 1, 4, 9, 0, 3, 6, 7 }};
+    auto start = std::chrono::high_resolution_clock::now();
+    for( int count = 0; count != 100000; ++count )
+      for( int i = 0; i != 16384; ++i ) {
+        vec3[ i ] = vec4[ i ] + vec5[ i ];
+        vec4[ i ] = vec4[ i ] - vec3[ i ];
+      }
+    auto end = std::chrono::high_resolution_clock::now();
+    double d = std::chrono::duration<double>(end - start).count();
+    std::cout << d << std::endl;
+    std::cout << "debug: " << vec3[ 3 ] << std::endl;
+    std::cout << "debug: " << vec4[ 3 ] << std::endl;
+  }
+/*  stream::my_context< decltype( args ), float, boost::mpl::size_t< 64 > > ctx( args );
+  boost::proto::eval( boost::proto::lit( 1 ) + 3 + stream::_3, ctx );
   stream::simd::compiler::vector< float, boost::mpl::size_t< 64 > >::type foo;
   {
     stream::simd::wrapper::vector< float, boost::mpl::size_t< 64 > > foow( foo );
@@ -521,5 +887,5 @@ int main() {
     stream::simd::wrapper::const_vector< float, boost::mpl::size_t< 64 > > foow( foo );
     for( const auto &elem: foow )
       std::cout << elem << std::endl;
-  }
+  }*/
 }
