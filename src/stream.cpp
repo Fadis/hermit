@@ -8,12 +8,15 @@
 #include <boost/mpl/int.hpp>
 #include <boost/mpl/if.hpp>
 #include <boost/mpl/arithmetic.hpp>
+#include <boost/mpl/equal.hpp>
+#include <boost/mpl/min_max.hpp>
 #include <boost/mpl/shift_left.hpp>
 #include <boost/iterator_adaptors.hpp>
 #include <boost/ref.hpp>
 #include <boost/iterator/reverse_iterator.hpp>
 #include <boost/swap.hpp>
 #include <boost/type_traits.hpp>
+#include <boost/preprocessor.hpp>
 namespace stream {
   namespace simd {
     namespace compiler {
@@ -545,11 +548,11 @@ namespace stream {
       template<typename T, typename Size> \
       inline void name ( \
         typename container::vector< T, Size > &dest, \
-        typename container::vector< T, Size > &left \
+        const typename container::vector< T, Size > &left \
       ) { \
-        typename container::vector< T, Size >::vector_iterator left_cur = left.vbegin(); \
+        typename container::vector< T, Size >::const_vector_iterator left_cur = left.vbegin(); \
         typename container::vector< T, Size >::vector_iterator dest_cur = dest.vbegin(); \
-        const typename container::vector< T, Size >::vector_iterator left_end = left.vend(); \
+        const typename container::vector< T, Size >::const_vector_iterator left_end = left.vend(); \
         for( ; left_cur != left_end; ++dest_cur, ++left_cur ) \
           dest_cur->packed = oper left_cur->packed; \
       } \
@@ -567,11 +570,11 @@ namespace stream {
       template<typename T, typename Size> \
       inline void name ( \
         typename container::vector< T, Size > &dest, \
-        typename container::vector< T, Size > &left \
+        const typename container::vector< T, Size > &left \
       ) { \
-        typename container::vector< T, Size >::vector_iterator left_cur = left.vbegin(); \
+        typename container::vector< T, Size >::const_vector_iterator left_cur = left.vbegin(); \
         typename container::vector< T, Size >::vector_iterator dest_cur = dest.vbegin(); \
-        const typename container::vector< T, Size >::vector_iterator left_end = left.vend(); \
+        const typename container::vector< T, Size >::const_vector_iterator left_end = left.vend(); \
         for( ; left_cur != left_end; ++dest_cur, ++left_cur ) \
           dest_cur->packed = left_cur->packed oper; \
       } \
@@ -585,102 +588,283 @@ namespace stream {
           left_cur->packed oper; \
       }
 
-HERMIT_STREAM_SIMD_OPERATION_3( add, + )
-HERMIT_STREAM_SIMD_OPERATION_2( add, += )
-HERMIT_STREAM_SIMD_OPERATION_3( sub, - )
-HERMIT_STREAM_SIMD_OPERATION_2( sub, -= )
-HERMIT_STREAM_SIMD_OPERATION_3( mul, * )
-HERMIT_STREAM_SIMD_OPERATION_2( mul, *= )
-HERMIT_STREAM_SIMD_OPERATION_3( div, / )
-HERMIT_STREAM_SIMD_OPERATION_2( div, /= )
-HERMIT_STREAM_SIMD_OPERATION_3( eq, == )
-HERMIT_STREAM_SIMD_OPERATION_3( neq, != )
-HERMIT_STREAM_SIMD_OPERATION_3( gt, > )
-HERMIT_STREAM_SIMD_OPERATION_3( lt, < )
-HERMIT_STREAM_SIMD_OPERATION_3( ge, >= )
-HERMIT_STREAM_SIMD_OPERATION_3( le, <= )
-HERMIT_STREAM_SIMD_OPERATION_3( rshift, >> )
-HERMIT_STREAM_SIMD_OPERATION_2( rshift, >>= )
-HERMIT_STREAM_SIMD_OPERATION_3( lshift, << )
-HERMIT_STREAM_SIMD_OPERATION_2( lshift, <<= )
-HERMIT_STREAM_SIMD_OPERATION_3( and_, & )
-HERMIT_STREAM_SIMD_OPERATION_2( and_, &= )
-HERMIT_STREAM_SIMD_OPERATION_3( or_, | )
-HERMIT_STREAM_SIMD_OPERATION_2( or_, |= )
-HERMIT_STREAM_SIMD_OPERATION_3( xor_, ^ )
-HERMIT_STREAM_SIMD_OPERATION_2( xor_, ^= )
-HERMIT_STREAM_SIMD_OPERATION_1PRE( inc_pre, ++ )
-HERMIT_STREAM_SIMD_OPERATION_1PRE( dec_pre, -- )
-HERMIT_STREAM_SIMD_OPERATION_1POST( inc_post, ++ )
-HERMIT_STREAM_SIMD_OPERATION_1POST( dec_post, -- )
-HERMIT_STREAM_SIMD_OPERATION_1PRE( pos, + )
-HERMIT_STREAM_SIMD_OPERATION_1PRE( neg, - )
-HERMIT_STREAM_SIMD_OPERATION_1PRE( not_, ~ )
+HERMIT_STREAM_SIMD_OPERATION_3( plus, + )
+HERMIT_STREAM_SIMD_OPERATION_2( plus_assign, += )
+HERMIT_STREAM_SIMD_OPERATION_3( minus, - )
+HERMIT_STREAM_SIMD_OPERATION_2( minus_assign, -= )
+HERMIT_STREAM_SIMD_OPERATION_3( multiplies, * )
+HERMIT_STREAM_SIMD_OPERATION_2( multiplies_assign, *= )
+HERMIT_STREAM_SIMD_OPERATION_3( divides, / )
+HERMIT_STREAM_SIMD_OPERATION_2( divides_assign, /= )
+HERMIT_STREAM_SIMD_OPERATION_3( modulus, % )
+HERMIT_STREAM_SIMD_OPERATION_2( modulus_assign, %= )
+HERMIT_STREAM_SIMD_OPERATION_3( equal_to, == )
+HERMIT_STREAM_SIMD_OPERATION_3( not_equal_to, != )
+HERMIT_STREAM_SIMD_OPERATION_3( greater, > )
+HERMIT_STREAM_SIMD_OPERATION_3( less, < )
+HERMIT_STREAM_SIMD_OPERATION_3( greater_equal, >= )
+HERMIT_STREAM_SIMD_OPERATION_3( less_equal, <= )
+HERMIT_STREAM_SIMD_OPERATION_3( shift_right, >> )
+HERMIT_STREAM_SIMD_OPERATION_2( shift_right_assign, >>= )
+HERMIT_STREAM_SIMD_OPERATION_3( shift_left, << )
+HERMIT_STREAM_SIMD_OPERATION_2( shift_left_assign, <<= )
+HERMIT_STREAM_SIMD_OPERATION_3( bitwise_and, & )
+HERMIT_STREAM_SIMD_OPERATION_2( bitwise_and_assign, &= )
+HERMIT_STREAM_SIMD_OPERATION_3( bitwise_or, | )
+HERMIT_STREAM_SIMD_OPERATION_2( bitwise_or_assign, |= )
+HERMIT_STREAM_SIMD_OPERATION_3( logical_and, && )
+HERMIT_STREAM_SIMD_OPERATION_3( logical_or, || )
+HERMIT_STREAM_SIMD_OPERATION_3( bitwise_xor, ^ )
+HERMIT_STREAM_SIMD_OPERATION_2( bitwise_xor_assign, ^= )
+HERMIT_STREAM_SIMD_OPERATION_1PRE( pre_inc, ++ )
+HERMIT_STREAM_SIMD_OPERATION_1PRE( pre_dec, -- )
+HERMIT_STREAM_SIMD_OPERATION_1POST( post_inc, ++ )
+HERMIT_STREAM_SIMD_OPERATION_1POST( post_dec, -- )
+HERMIT_STREAM_SIMD_OPERATION_1PRE( unary_plus, + )
+HERMIT_STREAM_SIMD_OPERATION_1PRE( negate, - )
+HERMIT_STREAM_SIMD_OPERATION_1PRE( complement, ~ )
+HERMIT_STREAM_SIMD_OPERATION_1PRE( logical_not, ! )
     }
     namespace wrapper {
     }
   }
 
+
+  namespace detail {
+  }
+
+  template< typename T >
+    struct is_vector {
+      template< typename U, typename Size >
+      static boost::mpl::bool_< true > check( simd::container::vector< U, Size > );
+      static boost::mpl::bool_< false > check( ... );
+      typedef decltype( is_vector< T >::check( std::declval< T >() ) ) type;
+      static constexpr bool value = type::value;
+    };
+
+  template< typename T >
+    struct vector_length {
+      template< typename U, typename Size >
+      static Size check( simd::container::vector< U, Size > );
+      static boost::mpl::size_t< 1 > check( ... );
+      typedef decltype( vector_length< T >::check( std::declval< T >() ) ) type;
+      static constexpr bool value = type::value;
+    };
+  
+  template< typename T >
+    struct vector_element_type {
+      template< typename U, typename Size >
+      static typename boost::remove_cv< U >::type check( simd::container::vector< U, Size > );
+      static typename boost::remove_cv< T >::type check( ... );
+      typedef decltype( vector_element_type< T >::check( std::declval< T >() ) ) type;
+    };
+
+  template< typename T, typename U >
+    struct is_same_length : public boost::mpl::equal<
+      vector_length< T >,
+      vector_length< U >
+    > {};
+
   namespace proto = boost::proto;
   using proto::argsns_::list2;
   using proto::exprns_::expr;
 
+  struct placeholder_ {};
   template < typename Index >
-    struct placeholder {};
-  boost::proto::terminal< placeholder< boost::mpl::int_< 0 > > >::type const _1 = {{}};
-  boost::proto::terminal< placeholder< boost::mpl::int_< 1 > > >::type const _2 = {{}};
-  boost::proto::terminal< placeholder< boost::mpl::int_< 2 > > >::type const _3 = {{}};
-  boost::proto::terminal< placeholder< boost::mpl::int_< 3 > > >::type const _4 = {{}};
-  boost::proto::terminal< placeholder< boost::mpl::int_< 4 > > >::type const _5 = {{}};
-  boost::proto::terminal< placeholder< boost::mpl::int_< 5 > > >::type const _6 = {{}};
+    struct placeholder : public placeholder_ {};
+#define HERMIT_STREAM_PLACEHOLDER( z, index, unused ) \
+  boost::proto::terminal< placeholder< boost::mpl::int_< index > > >::type const BOOST_PP_CAT( _, BOOST_PP_INC( index ) ) = {{}};
 
+BOOST_PP_REPEAT( FUSION_MAX_VECTOR_SIZE, HERMIT_STREAM_PLACEHOLDER, )
+
+  struct sin_ {
+    template< typename T, typename Context >
+      inline T operator()( const T &value, Context& ) const { return sinf( value ); }
+  };
+  boost::proto::terminal< sin_ >::type const sin = {{}};
+  
+  struct floor_ {
+    template< typename T, typename Context >
+      inline const typename Context::buffer_type &operator()(
+        const T &source,
+        Context &ctx,
+        typename boost::enable_if<
+          boost::mpl::and_<
+            is_vector< T >,
+            is_same_length< T, typename Context::buffer_type >,
+            boost::is_same< float, typename vector_element_type< T >::type >
+          >
+        >::type* = 0
+      ) const {
+        for( size_t index = 0; index != ctx.current_buffer->size(); ++index )
+          ( *ctx.current_buffer )[ index ] = floorf( source[ index ] );
+        return *ctx.current_buffer;
+      }
+    template< typename T, typename Context >
+      inline const typename Context::buffer_type &operator()(
+        const T &source,
+        Context &ctx,
+        typename boost::enable_if<
+          boost::mpl::and_<
+            is_vector< T >,
+            is_same_length< T, typename Context::buffer_type >,
+            boost::is_same< double, typename vector_element_type< T >::type >
+          >
+        >::type* = 0
+      ) const {
+        for( size_t index = 0; index != ctx.current_buffer->size(); ++index )
+          ( *ctx.current_buffer )[ index ] = floor( source[ index ] );
+        return *ctx.current_buffer;
+      }
+    template< typename T, typename Context >
+      inline const typename Context::buffer_type &operator()(
+        const T &source,
+        Context &ctx,
+        typename boost::enable_if<
+          boost::mpl::and_<
+            is_vector< T >,
+            is_same_length< T, typename Context::buffer_type >,
+            boost::is_integral< T >
+          >
+        >::type* = 0
+      ) const {
+        return source;
+      }
+    template< typename T, typename Context >
+      inline T operator()(
+        const T &source,
+        Context &ctx,
+        typename boost::enable_if<
+          boost::mpl::and_<
+            boost::mpl::not_< is_vector< T > >,
+            boost::is_same< float, T >
+          >
+        >::type* = 0
+      ) const {
+        return floorf( source );
+      }
+    template< typename T, typename Context >
+      inline T operator()(
+        const T &source,
+        Context &ctx,
+        typename boost::enable_if<
+          boost::mpl::and_<
+            boost::mpl::not_< is_vector< T > >,
+            boost::is_integral< T >
+          >
+        >::type* = 0
+      ) const {
+        return floor( source );
+      }
+    template< typename T, typename Context >
+      inline T operator()(
+        const T &source,
+        Context &ctx,
+        typename boost::enable_if<
+          boost::mpl::and_<
+            boost::mpl::not_< is_vector< T > >,
+            boost::is_same< double, T >
+          >
+        >::type* = 0
+      ) const {
+        return source;
+      }
+  };
+  boost::proto::terminal< floor_ >::type const floor = {{}};
+
+  struct sampler_ {
+    template< typename T, typename U, typename Context >
+      inline typename Context::buffer_type &operator()(
+        const T &source,
+        const U &reference,
+        Context &ctx,
+        typename boost::enable_if<
+          boost::mpl::and_<
+            is_vector< U >,
+            is_same_length< U, typename Context::buffer_type >
+          >
+        >::type* = 0
+      ) {
+//        for( size_t index = 0; index != ctx.current_buffer->size(); ++index ) {
+//          ( *ctx.current_buffer )[ index ] = source[ ( reference[ index ] - static_cast< int >( reference[ index ] ) ) * source.size() ];
+          return *ctx.current_buffer;
+//        }
+      }
+/*    template< typename T, typename U, typename Context >
+      inline const typename T::value_type &operator()(
+        const T &source,
+        const U &reference,
+        Context &ctx,
+        typename boost::enable_if<
+          boost::mpl::and_<
+            boost::mpl::not_< is_vector< U > >,
+            boost::mpl::not_< is_vector< U > >,
+            typename Context::buffer_type >,
+              vector_length< typename U >
+            >
+          >
+        >::type* = 0
+      ) {
+//        return source[ ( reference[ index ] ) * source.size() ];
+//          return *ctx.current_buffer;
+        }
+      }*/
+    private:
+      floor_ floor;
+  };
 
   template< typename ArgumentsType, typename T, typename Size >
     class my_context {
       public:
-        typedef typename simd::container::vector< T, Size > buffer_type;
+        typedef simd::container::vector< T, Size > buffer_type;
         typedef my_context< ArgumentsType, T, Size > self_type;
+        typedef my_context< ArgumentsType, T, boost::mpl::max< boost::mpl::divides< Size, boost::mpl::int_< 2 > >, boost::mpl::int_< 4 > > > half_type;
       private:
-        static int as_value( int value, self_type & ) {
+        template< typename ValueType >
+        inline static const ValueType &as_value(
+          const ValueType &value, self_type&,
+          typename boost::disable_if<
+            boost::is_convertible<
+              placeholder_,
+              ValueType
+            >
+          >::type* = 0
+        ) {
           return value;
-        }
-        static unsigned int as_value( unsigned int value, self_type & ) {
-          return value;
-        }
-        static float as_value( float value, self_type & ) {
-          return value;
-        }
-        static double as_value( double value, self_type & ) {
-          return value;
-        }
-        static void as_value( simd::container::vector< T, Size > value, self_type &ctx ) {
-          ctx.origin_buffer = value;
         }
         template < typename Index >
-          static auto as_value( const placeholder< Index >&, self_type &context ) -> decltype( boost::fusion::at< Index >( std::declval< ArgumentsType >() ) ) {
+          inline static buffer_type &as_value( const placeholder< Index >&, self_type &context,
+            typename boost::enable_if< boost::is_convertible< buffer_type, decltype( boost::fusion::at< Index >( std::declval< ArgumentsType >() ) ) > >::type* = 0
+          ) {
+            return boost::fusion::at< Index >( context.arguments );
+          }
+        template < typename Index >
+          inline static auto as_value( const placeholder< Index >&, self_type &context,
+            typename boost::disable_if< boost::is_convertible< buffer_type, decltype( boost::fusion::at< Index >( std::declval< ArgumentsType >() ) ) > >::type* = 0
+          ) -> decltype( boost::fusion::at< Index >( std::declval< ArgumentsType >() ) ) {
             return boost::fusion::at< Index >( context.arguments );
           }
         template< typename Expr >
         struct both_are_vector : public boost::mpl::and_<
           boost::is_same<
-            void,
-            decltype( proto::eval( boost::proto::left( std::declval< Expr& >() ), std::declval< my_context& >() ) )
+            const buffer_type&,
+            decltype( proto::eval( boost::proto::left( std::declval< Expr& >() ), std::declval< self_type& >() ) )
           >,
           boost::is_same<
-            void,
-            decltype( proto::eval( boost::proto::right( std::declval< Expr& >() ), std::declval< my_context& >() ) )
+            const buffer_type&,
+            decltype( proto::eval( boost::proto::right( std::declval< Expr& >() ), std::declval< self_type& >() ) )
           >
         > {};
         template< typename Expr >
         struct only_left_is_vector : public boost::mpl::and_<
           boost::is_same<
-            void,
-            decltype( proto::eval( boost::proto::left( std::declval< Expr& >() ), std::declval< my_context& >() ) )
+            const buffer_type&,
+            decltype( proto::eval( boost::proto::left( std::declval< Expr& >() ), std::declval< self_type& >() ) )
           >,
           boost::mpl::not_<
             boost::is_same<
-              void,
-              decltype( proto::eval( boost::proto::right( std::declval< Expr& >() ), std::declval< my_context& >() ) )
+              const buffer_type&,
+              decltype( proto::eval( boost::proto::right( std::declval< Expr& >() ), std::declval< self_type& >() ) )
             >
           >
         > {};
@@ -688,164 +872,312 @@ HERMIT_STREAM_SIMD_OPERATION_1PRE( not_, ~ )
         struct only_right_is_vector : public boost::mpl::and_<
           boost::mpl::not_<
             boost::is_same<
-              void,
-              decltype( proto::eval( boost::proto::left( std::declval< Expr& >() ), std::declval< my_context& >() ) )
+              const buffer_type&,
+              decltype( proto::eval( boost::proto::left( std::declval< Expr& >() ), std::declval< self_type& >() ) )
             >
           >,
           boost::is_same<
-            void,
-            decltype( proto::eval( boost::proto::right( std::declval< Expr& >() ), std::declval< my_context& >() ) )
+            const buffer_type&,
+            decltype( proto::eval( boost::proto::right( std::declval< Expr& >() ), std::declval< self_type& >() ) )
           >
         > {};
         template< typename Expr >
         struct neither_is_vector : public boost::mpl::and_<
           boost::mpl::not_<
             boost::is_convertible<
-              void,
-              decltype( proto::eval( boost::proto::left( std::declval< Expr& >() ), std::declval< my_context& >() ) )
+              const buffer_type&,
+              decltype( proto::eval( boost::proto::left( std::declval< Expr& >() ), std::declval< self_type& >() ) )
             >
           >,
           boost::mpl::not_<
             boost::is_convertible<
-              void,
-              decltype( proto::eval( boost::proto::right( std::declval< Expr& >() ), std::declval< my_context& >() ) )
+              const buffer_type&,
+              decltype( proto::eval( boost::proto::right( std::declval< Expr& >() ), std::declval< self_type& >() ) )
             >
           >
         > {};
         template< typename Expr >
-          static void add(
-            Expr &e, self_type &ctx,
-            typename boost::enable_if< both_are_vector< Expr > >::type* = 0
-          ) {
-            proto::eval( boost::proto::left( e ), ctx );
-            buffer_type temporary_buffer;
-            boost::swap( ctx.origin_buffer, temporary_buffer );
-            proto::eval( boost::proto::right( e ), ctx );
-            simd::operation::add< T, Size >( ctx.origin_buffer, temporary_buffer, ctx.origin_buffer );
-          }
+        struct is_vector : public
+          boost::is_convertible<
+            const buffer_type&,
+            decltype( proto::eval( boost::proto::left( std::declval< Expr& >() ), std::declval< self_type& >() ) )
+        > {};
         template< typename Expr >
-          static void add(
-            Expr &e, self_type &ctx,
-            typename boost::enable_if< only_left_is_vector< Expr > >::type* = 0
-          ) {
-            proto::eval( boost::proto::left( e ), ctx );
-            simd::operation::add< T, Size >( ctx.origin_buffer, ctx.origin_buffer, proto::eval( boost::proto::right( e ), ctx ) );
-          }
-        template< typename Expr >
-          static void add(
-            Expr &e, self_type &ctx,
-            typename boost::enable_if< only_right_is_vector< Expr > >::type* = 0
-          ){
-            proto::eval( boost::proto::right( e ), ctx );
-            simd::operation::add< T, Size >( ctx.origin_buffer, proto::eval( boost::proto::left( e ), ctx ), ctx.origin_buffer );
-          }
-        template< typename Expr >
-          static auto add(
-            Expr &e, self_type &ctx,
-            typename boost::enable_if< neither_is_vector< Expr > >::type* = 0
-          ) -> decltype( proto::eval( boost::proto::left( e ), ctx ) + proto::eval( boost::proto::right( e ), ctx ) ) {
-          return proto::eval( boost::proto::left( e ), ctx ) + proto::eval( boost::proto::right( e ), ctx );
-          }
+        struct is_not_vector : public boost::mpl::not_<
+          boost::is_convertible<
+            const buffer_type&,
+            decltype( proto::eval( boost::proto::left( std::declval< Expr& >() ), std::declval< self_type& >() ) )
+          >
+        > {};
 
-
-        template< typename Expr >
-          static void sub(
-            Expr e, self_type &ctx,
-            typename boost::enable_if< both_are_vector< Expr > >::type* = 0
-          ) {
-            proto::eval( boost::proto::left( e ), ctx );
-            buffer_type temporary_buffer;
-            boost::swap( ctx.origin_buffer, temporary_buffer );
-            proto::eval( boost::proto::right( e ), ctx );
-            simd::operation::sub< T, Size >( ctx.origin_buffer, temporary_buffer, ctx.origin_buffer );
+#define HERMIT_STREAM_CONTEXT_OPERATION_3( name, oper ) \
+        template< typename Expr > \
+          inline static const buffer_type &name ( \
+            Expr &e, self_type &ctx, \
+            typename boost::enable_if< both_are_vector< Expr > >::type* = 0 \
+          ) { \
+            const buffer_type &left = proto::eval( boost::proto::left( e ), ctx ); \
+            buffer_type temporary_buffer; \
+            buffer_type *temporary_buffer_addr = &temporary_buffer; \
+            std::swap( ctx.current_buffer, temporary_buffer_addr ); \
+            const buffer_type &right = proto::eval( boost::proto::right( e ), ctx ); \
+            std::swap( ctx.current_buffer, temporary_buffer_addr ); \
+            simd::operation:: name < T, Size >( *ctx.current_buffer, left, right ); \
+            return *ctx.current_buffer; \
+          } \
+        template< typename Expr > \
+          inline static const buffer_type &name ( \
+            Expr &e, self_type &ctx, \
+            typename boost::enable_if< only_left_is_vector< Expr > >::type* = 0 \
+          ) { \
+            const buffer_type &left = proto::eval( boost::proto::left( e ), ctx ); \
+            simd::operation:: name < T, Size >( *ctx.current_buffer, left, proto::eval( boost::proto::right( e ), ctx ) ); \
+            return *ctx.current_buffer; \
+          } \
+        template< typename Expr > \
+          inline static const buffer_type &name ( \
+            Expr &e, self_type &ctx, \
+            typename boost::enable_if< only_right_is_vector< Expr > >::type* = 0 \
+          ){ \
+            const buffer_type &right = proto::eval( boost::proto::right( e ), ctx ); \
+            simd::operation:: name < T, Size >( *ctx.current_buffer, proto::eval( boost::proto::left( e ), ctx ), right ); \
+            return *ctx.current_buffer; \
+          } \
+        template< typename Expr > \
+          inline static auto name ( \
+            Expr &e, self_type &ctx, \
+            typename boost::enable_if< neither_is_vector< Expr > >::type* = 0 \
+          ) -> decltype( proto::eval( boost::proto::left( e ), ctx ) oper proto::eval( boost::proto::right( e ), ctx ) ) { \
+            return proto::eval( boost::proto::left( e ), ctx ) oper proto::eval( boost::proto::right( e ), ctx ); \
           }
-        template< typename Expr >
-          static void sub(
-            Expr e, self_type &ctx,
-            typename boost::enable_if< only_left_is_vector< Expr > >::type* = 0
-          ) {
-            proto::eval( boost::proto::right( e ), ctx );
-            simd::operation::sub< T, Size >( ctx.origin_buffer, proto::eval( boost::proto::left( e ), ctx ), ctx.origin_buffer );
+#define HERMIT_STREAM_CONTEXT_OPERATION_1PRE( name, oper ) \
+        template< typename Expr > \
+          inline static const buffer_type &name ( \
+            Expr &e, self_type &ctx, \
+            typename boost::enable_if< is_vector< Expr > >::type* = 0 \
+          ) { \
+            const auto &value = proto::eval( boost::proto::left( e ), ctx ); \
+            simd::operation:: name < T, Size >( *ctx.current_buffer, value ); \
+            return *ctx.current_buffer; \
+          } \
+        template< typename Expr > \
+          inline static auto name ( \
+            Expr &e, self_type &ctx, \
+            typename boost::enable_if< is_not_vector< Expr > >::type* = 0 \
+          ) -> decltype( oper proto::eval( boost::proto::left( e ), ctx ) ) { \
+            return oper proto::eval( boost::proto::left( e ), ctx ); \
           }
-        template< typename Expr >
-          static void sub(
-            Expr e, self_type &ctx,
-            typename boost::enable_if< only_right_is_vector< Expr > >::type* = 0
-          ) {
-            proto::eval( boost::proto::left( e ), ctx );
-            simd::operation::sub< T, Size >( ctx.origin_buffer, ctx.origin_buffer, proto::eval( boost::proto::right( e ), ctx ) );
+#define HERMIT_STREAM_CONTEXT_OPERATION_1POST( name, oper ) \
+        template< typename Expr > \
+          inline static const buffer_type &name ( \
+            Expr &e, self_type &ctx, \
+            typename boost::enable_if< is_vector< Expr > >::type* = 0 \
+          ) { \
+            const buffer_type value = proto::eval( boost::proto::left( e ), ctx ); \
+            simd::operation:: name < T, Size >( *ctx.current_buffer, value ); \
+            return *ctx.current_buffer; \
+          } \
+        template< typename Expr > \
+          inline static auto name ( \
+            Expr &e, self_type &ctx, \
+            typename boost::enable_if< is_not_vector< Expr > >::type* = 0 \
+          ) -> decltype( proto::eval( boost::proto::left( e ), ctx ) oper ) { \
+            return proto::eval( boost::proto::left( e ), ctx ) oper; \
           }
-        template< typename Expr >
-          static auto sub(
-            Expr e, self_type &ctx,
-            typename boost::enable_if< neither_is_vector< Expr > >::type* = 0
-          ) -> decltype( proto::eval( boost::proto::left( e ), ctx ) + proto::eval( boost::proto::right( e ), ctx ) ) {
-          return proto::eval( boost::proto::left( e ), ctx ) - proto::eval( boost::proto::right( e ), ctx );
-          }
-      
-      
+HERMIT_STREAM_CONTEXT_OPERATION_3( plus, + )
+HERMIT_STREAM_CONTEXT_OPERATION_3( minus, - )
+HERMIT_STREAM_CONTEXT_OPERATION_3( multiplies, * )
+HERMIT_STREAM_CONTEXT_OPERATION_3( divides, / )
+HERMIT_STREAM_CONTEXT_OPERATION_3( modulus, % )
+HERMIT_STREAM_CONTEXT_OPERATION_3( equal_to, == )
+HERMIT_STREAM_CONTEXT_OPERATION_3( not_equal_to, != )
+HERMIT_STREAM_CONTEXT_OPERATION_3( bitwise_and, & )
+HERMIT_STREAM_CONTEXT_OPERATION_3( bitwise_or, | )
+HERMIT_STREAM_CONTEXT_OPERATION_3( bitwise_xor, ^ )
+HERMIT_STREAM_CONTEXT_OPERATION_3( logical_and, && )
+HERMIT_STREAM_CONTEXT_OPERATION_3( logical_or, || )
+HERMIT_STREAM_CONTEXT_OPERATION_3( greater, > )
+HERMIT_STREAM_CONTEXT_OPERATION_3( less, < )
+HERMIT_STREAM_CONTEXT_OPERATION_3( greater_equal, >= )
+HERMIT_STREAM_CONTEXT_OPERATION_3( less_equal, <= )
+HERMIT_STREAM_CONTEXT_OPERATION_3( shift_left, << )
+HERMIT_STREAM_CONTEXT_OPERATION_3( shift_right, >> )
+HERMIT_STREAM_CONTEXT_OPERATION_1PRE( unary_plus, + )
+HERMIT_STREAM_CONTEXT_OPERATION_1PRE( negate, - )
+HERMIT_STREAM_CONTEXT_OPERATION_1PRE( complement, ~ )
+HERMIT_STREAM_CONTEXT_OPERATION_1PRE( logical_not, ! )
+HERMIT_STREAM_CONTEXT_OPERATION_1PRE( pre_inc, ++ )
+HERMIT_STREAM_CONTEXT_OPERATION_1PRE( pre_dec, -- )
+HERMIT_STREAM_CONTEXT_OPERATION_1POST( post_inc, ++ )
+HERMIT_STREAM_CONTEXT_OPERATION_1POST( post_dec, -- )
       public:
-        my_context( const ArgumentsType &args ) : arguments( args ) {}
+        my_context( const ArgumentsType &args ) : arguments( args ), current_buffer( &origin_buffer ) {}
         template< typename Expr, typename  Enable = void > struct eval {};
         template<
           class Expr
           > struct eval<
           Expr,
           typename boost::enable_if<
-            proto::matches< Expr, proto::terminal< proto::_ > >
-            >::type
-            > {
+              proto::matches< Expr, proto::terminal< proto::_ > >
+          >::type
+        > {
               typedef decltype( self_type::as_value( boost::proto::value( std::declval< Expr >() ), std::declval<self_type&>() ) ) result_type;
-              result_type operator()( Expr &e, self_type &context ) { 
+              inline result_type operator()( Expr &e, self_type &context ) {
                 return self_type::as_value( boost::proto::value( e ), context );
               }
             };
-        template<
-          class Expr
-          > struct eval<
-          Expr,
-          typename boost::enable_if<
-            proto::matches< Expr, proto::plus< proto::_, proto::_ > >
-          >::type 
-        > {
-          typedef decltype( self_type::add( std::declval< Expr& >(), std::declval< self_type& >() ) ) result_type;
-          result_type operator()( Expr &e, self_type &ctx ) {
-            return self_type::add( e, ctx );
-          }
+#define HERMIT_STREAM_CONTEXT_FUNCTION_PROTO_( z, index, unused ) \
+        proto::_
+
+#define HERMIT_STREAM_CONTEXT_FUNCTION_ARGUMENTS_DECLTYPE( z, index, unused ) \
+              proto::eval( \
+                boost::proto::child< boost::mpl::int_< index > >( \
+                  std::declval< Expr& >() \
+                ), \
+                std::declval< self_type& >() \
+              ),
+
+#define HERMIT_STREAM_CONTEXT_FUNCTION_ARGUMENTS( z, index, unused ) \
+              proto::eval( \
+                boost::proto::child< boost::mpl::int_< index > >( \
+                  e \
+                ), \
+                ctx \
+              ),
+
+#define HERMIT_STREAM_CONTEXT_FUNCTION( z, arg_num, unused ) \
+        template< \
+          class Expr \
+          > struct eval< \
+          Expr, \
+          typename boost::enable_if< \
+              proto::matches< Expr, proto::function< BOOST_PP_ENUM( arg_num, HERMIT_STREAM_CONTEXT_FUNCTION_PROTO_, ) > > \
+          >::type \
+        > { \
+          typedef decltype( \
+            proto::eval( \
+              boost::proto::left( \
+                std::declval< Expr& >() \
+              ), \
+              std::declval< self_type& >() \
+            )( \
+              BOOST_PP_REPEAT_FROM_TO( 1, arg_num, HERMIT_STREAM_CONTEXT_FUNCTION_ARGUMENTS_DECLTYPE, ) \
+              std::declval< self_type& >() \
+            ) \
+          ) result_type; \
+          inline result_type operator()( Expr &e, self_type &ctx ) { \
+            return proto::eval( boost::proto::left( e ), ctx )( \
+              BOOST_PP_REPEAT_FROM_TO( 1, arg_num, HERMIT_STREAM_CONTEXT_FUNCTION_ARGUMENTS, ) \
+              ctx );\
+              } \
+            };
+
+BOOST_PP_REPEAT_FROM_TO( 1, 11, HERMIT_STREAM_CONTEXT_FUNCTION, )
+
+#define HERMIT_STREAM_CONTEXT_ACTIVE_OPERATION_3( tag ) \
+        template< \
+          class Expr \
+          > struct eval< \
+          Expr, \
+          typename boost::enable_if< \
+            proto::matches< Expr, proto:: tag < proto::_, proto::_ > > \
+          >::type \
+        > { \
+          typedef decltype( self_type:: tag ( std::declval< Expr& >(), std::declval< self_type& >() ) ) result_type; \
+          inline result_type operator()( Expr &e, self_type &ctx ) { \
+            return self_type:: tag ( e, ctx ); \
+          } \
         };
-        template<
-          class Expr
-          > struct eval<
-          Expr,
-          typename boost::enable_if<
-            proto::matches< Expr, proto::minus< proto::_, proto::_ > >
-          >::type 
-        > {
-          typedef decltype( self_type::sub( std::declval< Expr& >(), std::declval< self_type& >() ) ) result_type;
-          result_type operator()( Expr &e, self_type &ctx ) {
-            return self_type::sub( e, ctx );
-          }
+#define HERMIT_STREAM_CONTEXT_ACTIVE_OPERATION_1( tag ) \
+        template< \
+          class Expr \
+          > struct eval< \
+          Expr, \
+          typename boost::enable_if< \
+            proto::matches< Expr, proto:: tag < proto::_ > > \
+          >::type \
+        > { \
+          typedef decltype( self_type:: tag ( std::declval< Expr& >(), std::declval< self_type& >() ) ) result_type; \
+          inline result_type operator()( Expr &e, self_type &ctx ) { \
+            return self_type:: tag ( e, ctx ); \
+          } \
         };
+
+HERMIT_STREAM_CONTEXT_ACTIVE_OPERATION_3( plus )
+HERMIT_STREAM_CONTEXT_ACTIVE_OPERATION_3( minus )
+HERMIT_STREAM_CONTEXT_ACTIVE_OPERATION_3( multiplies )
+HERMIT_STREAM_CONTEXT_ACTIVE_OPERATION_3( divides )
+HERMIT_STREAM_CONTEXT_ACTIVE_OPERATION_3( modulus )
+HERMIT_STREAM_CONTEXT_ACTIVE_OPERATION_3( equal_to )
+HERMIT_STREAM_CONTEXT_ACTIVE_OPERATION_3( not_equal_to )
+HERMIT_STREAM_CONTEXT_ACTIVE_OPERATION_3( bitwise_and )
+HERMIT_STREAM_CONTEXT_ACTIVE_OPERATION_3( bitwise_or )
+HERMIT_STREAM_CONTEXT_ACTIVE_OPERATION_3( bitwise_xor )
+HERMIT_STREAM_CONTEXT_ACTIVE_OPERATION_3( logical_and )
+HERMIT_STREAM_CONTEXT_ACTIVE_OPERATION_3( logical_or )
+HERMIT_STREAM_CONTEXT_ACTIVE_OPERATION_3( greater )
+HERMIT_STREAM_CONTEXT_ACTIVE_OPERATION_3( less )
+HERMIT_STREAM_CONTEXT_ACTIVE_OPERATION_3( greater_equal )
+HERMIT_STREAM_CONTEXT_ACTIVE_OPERATION_3( less_equal )
+HERMIT_STREAM_CONTEXT_ACTIVE_OPERATION_3( shift_left )
+HERMIT_STREAM_CONTEXT_ACTIVE_OPERATION_3( shift_right )
+HERMIT_STREAM_CONTEXT_ACTIVE_OPERATION_1( unary_plus )
+HERMIT_STREAM_CONTEXT_ACTIVE_OPERATION_1( negate )
+HERMIT_STREAM_CONTEXT_ACTIVE_OPERATION_1( complement )
+HERMIT_STREAM_CONTEXT_ACTIVE_OPERATION_1( logical_not )
+HERMIT_STREAM_CONTEXT_ACTIVE_OPERATION_1( pre_inc )
+HERMIT_STREAM_CONTEXT_ACTIVE_OPERATION_1( pre_dec )
+HERMIT_STREAM_CONTEXT_ACTIVE_OPERATION_1( post_inc )
+HERMIT_STREAM_CONTEXT_ACTIVE_OPERATION_1( post_dec )
+
+        const buffer_type &get_origin_buffer() const {
+          return origin_buffer;
+        }
       private:
-        const ArgumentsType arguments;
+        ArgumentsType arguments;
         buffer_type origin_buffer;
+      public:
+        buffer_type *current_buffer;
     };
 }
 
 int main() {
-  stream::simd::container::vector< float, boost::mpl::size_t< 64 > > woo;
+  std::cout << stream::is_vector< float >::value << std::endl;
+  std::cout << stream::is_vector< stream::simd::container::vector< float, boost::mpl::size_t< 64 > > >::value << std::endl;
+  std::cout << stream::is_same_length< stream::simd::container::vector< float, boost::mpl::size_t< 64 > >, stream::simd::container::vector< float, boost::mpl::size_t< 64 > > >::value << std::endl;
+  std::cout << boost::is_same< float, typename stream::vector_element_type< stream::simd::container::vector< float, boost::mpl::size_t< 64 > > >::type >::value << std::endl;
+  stream::simd::container::vector< float, boost::mpl::size_t< 64 > > woo = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
   boost::fusion::vector< int, int, int, stream::simd::container::vector< float, boost::mpl::size_t< 64 > > > args( 1, 2, 10, woo );
   stream::my_context< decltype( args ), float, boost::mpl::size_t< 64 > > ctx( args );
-  boost::proto::eval( boost::proto::lit( 1 ) + woo, ctx );
-  stream::simd::compiler::vector< float, boost::mpl::size_t< 64 > >::type foo;
+//  boost::proto::eval( stream::pass_through( boost::proto::lit( 1 ) + woo + stream::_4 - 20 ), ctx );
+  boost::proto::eval( stream::floor( stream::sin( boost::proto::lit( 0.1f ) ) + woo ) + stream::_4 - 20, ctx );
+  for( const auto &elem: ctx.get_origin_buffer() )
+    std::cout << elem << " ";
+  std::cout << std::endl;
+  {
+    typedef stream::simd::container::vector< float, boost::mpl::size_t< 16384 > > vec_type;
+    vec_type vec2 = { 5, 4, 3, 2, 1, 0, -1, -2, -3, -4 };
+    vec_type vec3 = { 2, 5, 8, 1, 4, 9, 0, 3, 6, 7 };
+    boost::fusion::vector2< vec_type, vec_type > args( vec2, vec3 );
+    stream::my_context< decltype( args ), float, boost::mpl::size_t< 16384 > > ctx( args );
+    auto expr = vec3 - ( vec2 + stream::_2 );
+//    auto expr = vec2 - ( boost::proto::lit( vec2 ) + vec3 );
+    auto start = std::chrono::high_resolution_clock::now();
+    for( int count = 0; count != 100000; ++count ) {
+      boost::proto::eval( expr, ctx );
+    }
+    auto end = std::chrono::high_resolution_clock::now();
+    double d = std::chrono::duration<double>(end - start).count();
+    std::cout << d << std::endl;
+  }
   {
     stream::simd::container::vector< float, boost::mpl::size_t< 16384 > > vec1 = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
     stream::simd::container::vector< float, boost::mpl::size_t< 16384 > > vec2 = { 5, 4, 3, 2, 1, 0, -1, -2, -3, -4 };
     stream::simd::container::vector< float, boost::mpl::size_t< 16384 > > vec3 = { 2, 5, 8, 1, 4, 9, 0, 3, 6, 7 };
     auto start = std::chrono::high_resolution_clock::now();
     for( int count = 0; count != 100000; ++count ) {
-      stream::simd::operation::add( vec1, vec2, vec3 );
-      stream::simd::operation::sub( vec2, vec2, vec1 );
+      stream::simd::operation::plus( vec1, vec2, vec3 );
+      stream::simd::operation::minus( vec2, vec2, vec1 );
     }
     auto end = std::chrono::high_resolution_clock::now();
     double d = std::chrono::duration<double>(end - start).count();
@@ -869,23 +1201,4 @@ int main() {
     std::cout << "debug: " << vec3[ 3 ] << std::endl;
     std::cout << "debug: " << vec4[ 3 ] << std::endl;
   }
-/*  stream::my_context< decltype( args ), float, boost::mpl::size_t< 64 > > ctx( args );
-  boost::proto::eval( boost::proto::lit( 1 ) + 3 + stream::_3, ctx );
-  stream::simd::compiler::vector< float, boost::mpl::size_t< 64 > >::type foo;
-  {
-    stream::simd::wrapper::vector< float, boost::mpl::size_t< 64 > > foow( foo );
-    std::fill( foow.begin(), foow.end(), 3.0f );
-  }
-  stream::simd::compiler::vector< float, boost::mpl::size_t< 64 > >::type bar;
-  {
-    stream::simd::wrapper::vector< float, boost::mpl::size_t< 64 > > barw( bar );
-    std::fill( barw.begin(), barw.end(), 2.0f );
-  }
-  stream::simd::operation::add< float, boost::mpl::size_t< 64 > >( foo, foo, foo );
-  stream::simd::operation::mul< float, boost::mpl::size_t< 64 > >( foo, foo, bar );
-  {
-    stream::simd::wrapper::const_vector< float, boost::mpl::size_t< 64 > > foow( foo );
-    for( const auto &elem: foow )
-      std::cout << elem << std::endl;
-  }*/
 }
