@@ -35,6 +35,7 @@ ADD_EXECUTABLE( exr exr.cpp )
 target_link_libraries( exr ${Boost_LIBRARIES} ${OPENEXR_LIBRARIES} )
 ADD_EXECUTABLE( byte_stream_iterator_sample byte_stream_iterator_sample.cpp )
 ADD_EXECUTABLE( stream_sample stream.cpp )
+ADD_EXECUTABLE( stream_sample2 stream2.cpp )
 
 install( TARGETS hermit_mpint
   RUNTIME DESTINATION bin
