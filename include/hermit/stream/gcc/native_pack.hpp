@@ -97,10 +97,10 @@ namespace hermit {
       constexpr size_type size() {
         return size_;
       }
-      type get() {
+      type &get() {
         return value;
       }
-      const type get() const {
+      const type &get() const {
         return value;
       }
       template< typename T_, size_t size__ >

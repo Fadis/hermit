@@ -6,29 +6,20 @@
 namespace hermit {
   namespace stream {
     template<
-      typename LeftType, size_t left_size,
-      typename RightType, size_t right_size
+      typename Type, size_t size
     >
-    native_pack<
-      decltype( std::declval< LeftType >() + std::declval< RightType >() ),
-      boost::mpl::max<
-        boost::mpl::size_t_< left_size >,
-        boost::mpl::size_t_< right_size >
-      >::value
-    > add
+    struct plus< Type, size, Type, size > {
+      static native_pack< Type, size >
+      run(
+        const native_pack< Type, size > &left,
+        const native_pack< Type, size > &right
+      ) {
+        native_pack< Type, size > temp;
+        temp.get() = left.get() + right.get();
+        return temp;
+      }
+    };
   }
 }
-
-#if defined(__AVX2__)
-#include <hermit/stream/gcc/avx2/native_pack_operator.hpp>
-#elif defined(__AVX__)
-#include <hermit/stream/gcc/avx/native_pack_operator.hpp>
-#elif defined(__SSE2__)
-#include <hermit/stream/gcc/sse2/native_pack_operator.hpp>
-#elif defined(__SSE__)
-#include <hermit/stream/gcc/sse/native_pack_operator.hpp>
-#elif defined(__MMX__)
-#include <hermit/stream/gcc/mmx/native_pack_operator.hpp>
-#endif
 
 #endif
